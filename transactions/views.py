@@ -57,40 +57,16 @@ class DebtDetailView(RetrieveUpdateDestroyAPIView):
 
 
 class ImportListCreateView(APIView):
-    @transaction.atomic
+    @swagger_auto_schema(
+        request_body=ImportListSerializer,
+        responses={201: ImportListSerializer, 400: 'Bad Request'}
+    )
     def post(self, request):
-        import_list_data = {
-            'total': request.data.get('total'),
-            'paid': request.data.get('paid'),
-            'debt': request.data.get('debt'),
-            'supplier': request.data.get('supplier'),
-            'description': request.data.get('description'),
-            'branch': request.user.branch,
-        }
-
-        import_list_serializer = ImportListSerializer(data=import_list_data)
-
-        if import_list_serializer.is_valid():
-            import_list = import_list_serializer.save()
-
-            products_data = request.data.get('products', [])
-            product_errors = []
-
-            for product_data in products_data:
-                product_data['import_list'] = import_list.id
-
-                product_serializer = ImportProductSerializer(data=product_data)
-                if product_serializer.is_valid():
-                    product_serializer.save()
-                else:
-                    product_errors.append(product_serializer.errors)
-
-            if product_errors:
-                return Response({"product_errors": product_errors}, status=status.HTTP_400_BAD_REQUEST)
-
-            return Response(import_list_serializer.data, status=status.HTTP_201_CREATED)
-
-        return Response(import_list_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        serializer = ImportListSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class BranchFundTransferListCreateView(ListCreateAPIView):

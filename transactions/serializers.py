@@ -21,18 +21,27 @@ class PayDebtSerializer(ModelSerializer):
         fields = ['id', 'supplier', 'debt_amount', 'is_debt', 'current_debt', 'branch', 'created_at']
 
 
-
 class ImportProductSerializer(ModelSerializer):
     class Meta:
         model = ImportProduct
         fields = ['product', 'amount', 'buy_price', 'total_summ']
 
 class ImportListSerializer(ModelSerializer):
-    products = ImportProductSerializer(many=True, read_only=True)
+    products = ImportProductSerializer(many=True)
 
     class Meta:
         model = ImportList
-        fields = ['total', 'paid', 'debt', 'supplier', 'description', 'products']
+        fields = ['total', 'paid', 'debt', 'supplier', 'description', 'branch', 'products']
+
+    def create(self, validated_data):
+        products_data = validated_data.pop('products')
+        import_list = ImportList.objects.create(**validated_data)
+        products_list = []
+        for product_data in products_data:
+            pro_cr = ImportProduct.objects.create(import_list=import_list, **product_data)
+            products_list.append(pro_cr)
+        import_list.products = products_list
+        return import_list
 
 
 class BranchFundTransferSerializer(ModelSerializer):
