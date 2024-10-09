@@ -98,13 +98,6 @@ class BranchFundTransferListCreateView(ListCreateAPIView):
         branch.balance = 0
         branch.save()
 
-class ImportListCreateView(CreateAPIView):
-    queryset = ImportList.objects.all()
-    serializer_class = ImportListSerializer
-
-    def perform_create(self, serializer):
-        serializer.save(branch=self.request.user.branch)
-
 
 class GiveLendingCreateView(CreateAPIView):
     queryset = Lending.objects.all()
