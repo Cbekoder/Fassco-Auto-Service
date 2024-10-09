@@ -1,4 +1,5 @@
 from decimal import Decimal
+from email.policy import default
 
 from django.db import models
 from django.utils.translation import gettext_lazy as _
@@ -30,6 +31,19 @@ class Order(models.Model):
     def __str__(self):
         return self.description
 
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+
+        if self.odo_mileage:
+            self.car.odo_mileage = self.odo_mileage
+            self.car.save()
+        if self.hev_mileage:
+            self.car.hev_mileage = self.hev_mileage
+            self.car.save()
+        if self.ev_mileage:
+            self.car.ev_mileage = self.ev_mileage
+            self.car.save()
+
 
 class OrderService(models.Model):
     order = models.ForeignKey(Order, on_delete=models.CASCADE)
@@ -51,7 +65,7 @@ class OrderService(models.Model):
 class OrderProduct(models.Model):
     order = models.ForeignKey(Order, on_delete=models.CASCADE)
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
-    amount = models.DecimalField(default=Decimal('1.00'), max_digits=10, decimal_places=2, verbose_name=_('Amount'))
+    amount = models.FloatField(default=1, verbose_name=_('Amount'))
     total = models.DecimalField(default=Decimal('0.00'), max_digits=10, decimal_places=2, verbose_name=_('Total'))
     discount = models.DecimalField(default=Decimal('0.00'), max_digits=10, decimal_places=2,
                                    verbose_name=_('Discount'))

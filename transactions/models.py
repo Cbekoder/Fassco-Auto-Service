@@ -1,5 +1,5 @@
 from django.core.validators import MinValueValidator
-from django.db import models
+from django.db import models, transaction
 from django.utils.translation import gettext_lazy as _
 
 from branches.models import Branch
@@ -41,6 +41,30 @@ class ImportList(models.Model):
     def __str__(self):
         return f"{self.branch.name} - {self.description}"
 
+    def save(self, *args, **kwargs):
+        with transaction.atomic():
+            if self.pk:
+                old_instance = ImportList.objects.get(pk=self.pk)
+                old_total_summ = old_instance.total_summ
+                self.total -= old_total_summ
+                old_debt = old_instance.debt
+                self.supplier.debt -= old_debt
+
+            self.total_summ = self.buy_price * self.amount
+
+            super().save(*args, **kwargs)
+
+            self.supplier.debt += self.debt
+            self.import_list.save()
+
+    def delete(self, *args, **kwargs):
+        with transaction.atomic():
+            self.import_list.total -= self.total_summ
+            self.import_list.save()
+
+            # Now delete the ImportListProductt instance
+            super().delete(*args, **kwargs)
+
 class ImportProduct(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE, verbose_name=_('Product'))
     amount = models.FloatField(default=1, verbose_name=_('Debt'))
@@ -54,6 +78,25 @@ class ImportProduct(models.Model):
 
     def __str__(self):
         return f"{self.product.name} - {self.amount}"
+
+    def save(self, *args, **kwargs):
+        with transaction.atomic():
+            if self.pk:
+                old_instance = ImportProduct.objects.get(pk=self.pk)
+                old_total_summ = old_instance.total_summ
+                old_amount = old_instance.amount
+                self.product.amount -= old_amount
+                self.import_list.total -= old_total_summ
+
+            self.total_summ = self.buy_price * self.amount
+
+            super().save(*args, **kwargs)
+
+            self.import_list.total += self.total_summ
+            self.product.amount += self.amount
+
+            self.product.save()
+            self.import_list.save()
 
 
 class BranchFundTransfer(models.Model):
