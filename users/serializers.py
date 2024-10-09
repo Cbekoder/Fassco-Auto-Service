@@ -2,6 +2,18 @@ from rest_framework.serializers import ModelSerializer, ValidationError
 from .models import Employee, Supplier, Client
 
 
+class SupplierSerializer(ModelSerializer):
+    class Meta:
+        model = Supplier
+        fields = ['id', 'first_name', 'last_name', 'debt', 'phone', 'address', 'branch']
+
+class SupplierPostSerializer(ModelSerializer):
+    class Meta:
+        model = Supplier
+        fields = ['id', 'first_name', 'last_name', 'phone', 'address']
+
+
+
 class ManagerSerializer(ModelSerializer):
     class Meta:
         model = Employee
@@ -25,7 +37,7 @@ class MechanicSerializer(ModelSerializer):
 class WorkerSerializer(ModelSerializer):
     class Meta:
         model = Employee
-        fields = ['id', 'first_name', 'last_name', 'phone', 'address', 'salary', 'branch_id']
+        fields = ['id', 'first_name', 'last_name', 'phone', 'address', 'salary']
 
     def validate(self, data):
         if data.get('salary') is None:
@@ -33,16 +45,6 @@ class WorkerSerializer(ModelSerializer):
         return data
 
 
-
-class SupplierSerializer(ModelSerializer):
-    class Meta:
-        model = Supplier
-        fields = ['id', 'first_name', 'last_name', 'debt', 'phone', 'address']
-
-class SupplierPostSerializer(ModelSerializer):
-    class Meta:
-        model = Supplier
-        fields = ['first_name', 'last_name', 'phone', 'address']
 
 
 

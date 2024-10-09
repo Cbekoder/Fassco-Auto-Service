@@ -4,7 +4,7 @@ from django.contrib.auth.models import AbstractUser
 from branches.models import Branch
 
 class User(AbstractUser):
-    branch_id = models.ForeignKey(Branch, blank=True, null=True, on_delete=models.CASCADE)
+    branch = models.ForeignKey(Branch, blank=True, null=True, on_delete=models.CASCADE)
 
     def __str__(self):
         return self.username
@@ -16,27 +16,29 @@ class UserTemp(models.Model):
     phone = models.CharField(max_length=13)
     address = models.TextField(null=True, blank=True)
 
-    branch_id = models.ForeignKey(Branch, on_delete=models.CASCADE)
+    branch = models.ForeignKey(Branch, on_delete=models.CASCADE)
+
+
+class Supplier(UserTemp):
+    debt = models.DecimalField(default=0, max_digits=15, decimal_places=2)
+
+    def __str__(self):
+        return f"{self.first_name} {self.last_name}"
+
 
 
 POSITION_CHOICES = (
-    ("meneger", _("Meneger")),
+    ("manager", _("Manager")),
     ("mechanic", _("Mechanic")),
     ("other", _("Other")),
 )
 
 class Employee(UserTemp):
     position = models.CharField(max_length=15, choices=POSITION_CHOICES)
+    balance = models.DecimalField(default=0, max_digits=15, decimal_places=2)
     commission_per = models.IntegerField(default=2, null=True, blank=True)
     kpi = models.IntegerField(null=True, blank=True)
     salary = models.IntegerField(null=True, blank=True)
-
-    def __str__(self):
-        return f"{self.first_name} {self.last_name}"
-
-
-class Supplier(UserTemp):
-    debt = models.DecimalField(default=0, max_digits=15, decimal_places=2)
 
     def __str__(self):
         return f"{self.first_name} {self.last_name}"

@@ -8,40 +8,48 @@ site.unregister(Group)
 
 @register(User)
 class UserAdmin(UserAdmin):
-    list_display = ('username', 'email', 'branch_id', 'is_active', 'is_staff', 'is_superuser')
-    search_fields = ('username', 'email', 'branch_id__name')
-    list_filter = ('branch_id', 'is_active', 'is_staff', 'is_superuser')
+    list_display = ('username', 'branch', 'is_staff', 'is_active')
+
+    search_fields = ('username', 'branch__name')
+
+    list_filter = ('is_staff', 'is_superuser', 'is_active', 'branch')
+
     fieldsets = (
-        *UserAdmin.fieldsets,
-        (  # new fieldset added on to the bottom
-            _('Branch'),  # group heading of your choice; set to None for a blank space instead of a header
-            {
-                'fields': (
-                    'branch_id',
-                ),
-            },
-        ),
+        (None, {'fields': ('username', 'password')}),
+        (_('Personal info'), {'fields': ('first_name', 'last_name', 'branch')}),
+        (_('Permissions'), {
+            'fields': ('is_active', 'is_staff', 'is_superuser'),
+        }),
+        (_('Important dates'), {'fields': ('last_login', 'date_joined')}),
     )
+    add_fieldsets = (
+        (None, {
+            'classes': ('wide',),
+            'fields': ('username', 'branch', 'password1', 'password2'),
+        }),
+    )
+    ordering = ('username',)
+    readonly_fields = ('last_login', 'date_joined')
 
 
 @register(Employee)
 class EmployeeAdmin(ModelAdmin):
-    list_display = ('first_name', 'last_name', 'position', 'branch_id', 'commission_per', 'salary', 'kpi')
-    search_fields = ('first_name', 'last_name', 'branch_id__name', 'position')
-    list_filter = ('branch_id', 'position')
+    list_display = ('first_name', 'last_name', 'position', 'branch', 'commission_per', 'salary', 'kpi')
+    search_fields = ('first_name', 'last_name', 'branch__name', 'position')
+    list_filter = ('branch', 'position')
 
 
 @register(Supplier)
 class SupplierAdmin(ModelAdmin):
-    list_display = ('first_name', 'last_name', 'phone', 'branch_id', 'debt')
-    search_fields = ('first_name', 'last_name', 'phone', 'branch_id__name')
-    list_filter = ('branch_id',)
+    list_display = ('first_name', 'last_name', 'phone', 'branch', 'debt')
+    search_fields = ('first_name', 'last_name', 'phone', 'branch__name')
+    list_filter = ('branch',)
 
 
 @register(Client)
 class ClientAdmin(ModelAdmin):
-    list_display = ('first_name', 'last_name', 'phone', 'extra_phone', 'branch_id')
-    search_fields = ('first_name', 'last_name', 'phone', 'extra_phone', 'branch_id__name')
-    list_filter = ('branch_id',)
+    list_display = ('first_name', 'last_name', 'phone', 'extra_phone', 'branch')
+    search_fields = ('first_name', 'last_name', 'phone', 'extra_phone', 'branch__name')
+    list_filter = ('branch',)
 
 

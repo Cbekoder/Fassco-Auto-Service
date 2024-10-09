@@ -3,7 +3,8 @@ from rest_framework.permissions import BasePermission
 
 class IsSameBranch(BasePermission):
     def has_object_permission(self, request, view, obj):
-        return request.user.branch_id == obj.branch_id
+        if request.user.is_authenticated:
+            return request.user.branch_id == obj.branch_id
 
 class IsSuperStatus(BasePermission):
     def has_permission(self, request, view):

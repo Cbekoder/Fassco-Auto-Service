@@ -1,13 +1,25 @@
 from django.core.validators import MinValueValidator
 from django.utils.translation import gettext_lazy as _
 from django.db import models
+from rest_framework.exceptions import ValidationError
+
 
 class Wallet(models.Model):
     name = models.CharField(max_length=100, unique=True)
-    balance = models.FloatField(validators=[MinValueValidator(0)])
+    balance = models.FloatField(default=0, validators=[MinValueValidator(0)])
+
+    class Meta:
+        verbose_name = _('Wallet')
+        verbose_name_plural = _('Wallet')
+
+    def save(self, *args, **kwargs):
+        if not self.pk and Wallet.objects.exists():
+            raise ValidationError(_('There can be only one Wallet instance.'))
+        return super().save(*args, **kwargs)
 
     def __str__(self):
         return str(self.balance)
+
 
 class Branch(models.Model):
     name = models.CharField(max_length=255, verbose_name=_('Name'))

@@ -17,8 +17,8 @@ class Product(models.Model):
     min_amount = models.FloatField(default=0, verbose_name=_('Min amount'))
     max_discount = models.PositiveIntegerField(default=0, validators=[MinValueValidator(0), MaxValueValidator(100)], verbose_name=_('Max discount'))
 
-    supplier_id = models.ForeignKey(Supplier, on_delete=models.CASCADE, verbose_name=_('Supplier'))
-    branch_id = models.ForeignKey(Branch, on_delete=models.CASCADE, verbose_name=_('Branch'))
+    supplier = models.ForeignKey(Supplier, on_delete=models.CASCADE, verbose_name=_('Supplier'))
+    branch = models.ForeignKey(Branch, on_delete=models.CASCADE, verbose_name=_('Branch'))
     created_at = models.DateTimeField(auto_now_add=True, verbose_name=_('Created at'))
     updated_at = models.DateTimeField(auto_now=True, verbose_name=_('Updated at'))
 
@@ -35,7 +35,7 @@ class Service(models.Model):
     name = models.CharField(max_length=50, verbose_name=_('Name'))
     price = models.DecimalField(max_digits=15, decimal_places=2, verbose_name=_('Price'))
 
-    branch_id = models.ForeignKey(Branch, on_delete=models.CASCADE, verbose_name=_('Branch'))
+    branch = models.ForeignKey(Branch, on_delete=models.CASCADE, verbose_name=_('Branch'))
 
     class Meta:
         verbose_name = _('Service')
@@ -56,9 +56,9 @@ class Car(models.Model):
     hev_mileage = models.FloatField(default=0, validators=[MinValueValidator(0)], verbose_name=_('HEV mileage'))
     ev_mileage = models.FloatField(default=0, validators=[MinValueValidator(0)], verbose_name=_('EV mileage'))
 
-    client_id = models.ForeignKey(Client, on_delete=models.CASCADE, verbose_name=_('Client id'))
+    client = models.ForeignKey(Client, on_delete=models.CASCADE, verbose_name=_('Client id'))
     created_at = models.DateTimeField(auto_now_add=True, verbose_name=_('Created at'))
-    branch_id = models.ForeignKey(Branch, on_delete=models.CASCADE, verbose_name=_('Branch'))
+    branch = models.ForeignKey(Branch, on_delete=models.CASCADE, verbose_name=_('Branch'))
 
     class Meta:
         verbose_name = _('Car')

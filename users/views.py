@@ -1,4 +1,7 @@
+from rest_framework import status
 from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView
+from rest_framework.response import Response
+
 from .models import Employee, Supplier, Client
 from .permissions import IsSameBranch
 from .serializers import *
@@ -6,17 +9,47 @@ from .serializers import ManagerSerializer
 from rest_framework.permissions import IsAuthenticated
 
 
+class SupplierListCreateView(ListCreateAPIView):
+    serializer_class = SupplierSerializer
+    permission_classes = [IsAuthenticated, IsSameBranch]
+
+    def get_queryset(self):
+        return Supplier.objects.filter(branch=self.request.user.branch)
+
+    def perform_create(self, serializer):
+        serializer.save(branch=self.request.user.branch)
+
+    def get_serializer_class(self):
+        if self.request.method == 'GET':
+            return SupplierSerializer
+        return SupplierPostSerializer
+
+    def create(self, request, *args, **kwargs):
+        response = super().create(request, *args, **kwargs)
+        supplier = self.get_queryset().get(pk=response.data['id'])
+        response_data = SupplierSerializer(supplier).data
+        return Response(response_data, status=status.HTTP_201_CREATED)
+
+class SupplierRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
+    serializer_class = SupplierSerializer
+    permission_classes = [IsAuthenticated, IsSameBranch]
+
+    def get_queryset(self):
+        return Supplier.objects.filter(branch=self.request.user.branch)
+
+
+
 class ManagerListCreateView(ListCreateAPIView):
     serializer_class = ManagerSerializer
     permission_classes = [IsAuthenticated, IsSameBranch]
 
     def get_queryset(self):
-        return Employee.objects.filter(position='manager', branch_id=self.request.user.branch_id)
+        return Employee.objects.filter(position='manager', branch=self.request.user.branch)
 
     def perform_create(self, serializer):
         serializer.save(
-            position="meneger",
-            branch_id=self.request.user.branch_id
+            position="manager",
+            branch=self.request.user.branch
         )
 
 class ManagerRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
@@ -24,7 +57,7 @@ class ManagerRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
     permission_classes = [IsAuthenticated, IsSameBranch]
 
     def get_queryset(self):
-        return Employee.objects.filter(position='manager', branch_id=self.request.user.branch_id)
+        return Employee.objects.filter(position='manager', branch=self.request.user.branch)
 
 
 class MechanicListCreateView(ListCreateAPIView):
@@ -32,13 +65,13 @@ class MechanicListCreateView(ListCreateAPIView):
     permission_classes = [IsAuthenticated, IsSameBranch]
 
     def get_queryset(self):
-        return Employee.objects.filter(position='mechanic', branch_id=self.request.user.branch_id)
+        return Employee.objects.filter(position='mechanic', branch=self.request.user.branch)
 
 
     def perform_create(self, serializer):
         serializer.save(
             position="mechanic",
-            branch_id=self.request.user.branch_id
+            branch=self.request.user.branch
         )
 
 class MechanicRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
@@ -46,7 +79,7 @@ class MechanicRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
     permission_classes = [IsAuthenticated, IsSameBranch]
 
     def get_queryset(self):
-        return Employee.objects.filter(position='mechanic', branch_id=self.request.user.branch_id)
+        return Employee.objects.filter(position='mechanic', branch=self.request.user.branch)
 
 
 class WorkerListCreateView(ListCreateAPIView):
@@ -54,43 +87,19 @@ class WorkerListCreateView(ListCreateAPIView):
     permission_classes = [IsAuthenticated, IsSameBranch]
 
     def get_queryset(self):
-        return Employee.objects.filter(position='other', branch_id=self.request.user.branch_id)
+        return Employee.objects.filter(position='other', branch=self.request.user.branch)
 
     def perform_create(self, serializer):
         serializer.save(
             position="other",
-            branch_id=self.request.user.branch_id
+            branch=self.request.user.branch
         )
 class WorkerRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
     serializer_class = WorkerSerializer
     permission_classes = [IsAuthenticated, IsSameBranch]
 
     def get_queryset(self):
-        return Employee.objects.filter(position='other', branch_id=self.request.user.branch_id)
-
-
-class SupplierListCreateView(ListCreateAPIView):
-    serializer_class = SupplierSerializer
-    permission_classes = [IsAuthenticated, IsSameBranch]
-
-    def get_queryset(self):
-        return Supplier.objects.filter(branch_id=self.request.user.branch_id)
-
-    def perform_create(self, serializer):
-        serializer.save(branch_id=self.request.user.branch_id)
-
-    def get_serializer_class(self):
-        if self.request.method == 'GET':
-            return SupplierSerializer
-        return SupplierPostSerializer
-
-
-class SupplierRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
-    serializer_class = SupplierSerializer
-    permission_classes = [IsAuthenticated, IsSameBranch]
-
-    def get_queryset(self):
-        return Supplier.objects.filter(branch_id=self.request.user.branch_id)
+        return Employee.objects.filter(position='other', branch=self.request.user.branch)
 
 
 class ClientListCreateView(ListCreateAPIView):
@@ -102,10 +111,10 @@ class ClientListCreateView(ListCreateAPIView):
         return ClientPostSerializer
 
     def get_queryset(self):
-        return Client.objects.filter(branch_id=self.request.user.branch_id)
+        return Client.objects.filter(branch=self.request.user.branch)
 
     def perform_create(self, serializer):
-        serializer.save(branch_id=self.request.user.branch_id)
+        serializer.save(branch=self.request.user.branch)
 
 
 class ClientRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
@@ -113,4 +122,4 @@ class ClientRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
     permission_classes = [IsAuthenticated, IsSameBranch]
 
     def get_queryset(self):
-        return Client.objects.filter(branch_id=self.request.user.branch_id)
+        return Client.objects.filter(branch=self.request.user.branch)

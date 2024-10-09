@@ -16,11 +16,11 @@ class ProductListCreateView(ListCreateAPIView):
         return ProductPostSerializer
 
     def get_queryset(self):
-        return Product.objects.filter(branch_id=self.request.user.branch_id)
+        return Product.objects.filter(branch=self.request.user.branch)
 
     def perform_create(self, serializer):
         serializer.save(
-            branch_id=self.request.user.branch_id
+            branch=self.request.user.branch
         )
 
 class ProductRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
@@ -28,12 +28,12 @@ class ProductRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
     permission_classes = [IsAuthenticated, IsSameBranch]
 
     def get_queryset(self):
-        return Product.objects.filter(branch_id=self.request.user.branch_id)
+        return Product.objects.filter(branch=self.request.user.branch)
 
 
 class ServiceListCreateView(ListCreateAPIView):
     serializer_class = ServiceSerializer
-    permission_classes = [IsStaffStatus]
+    permission_classes = [IsAuthenticated, IsSameBranch]
 
     def get_serializer_class(self):
         if self.request.method == 'GET':
@@ -41,10 +41,10 @@ class ServiceListCreateView(ListCreateAPIView):
         return ServicePostSerializer
 
     def get_queryset(self):
-        return Service.objects.filter(branch_id=self.request.user.branch_id)
+        return Service.objects.filter(branch=self.request.user.branch)
 
     def perform_create(self, serializer):
-        serializer.save(branch_id=self.request.user.branch_id)
+        serializer.save(branch=self.request.user.branch)
 
 
 class ServiceRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
@@ -52,7 +52,7 @@ class ServiceRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
     permission_classes = [IsAuthenticated, IsSameBranch]
 
     def get_queryset(self):
-        return Service.objects.filter(branch_id=self.request.user.branch_id)
+        return Service.objects.filter(branch=self.request.user.branch)
 
 
 class CarListCreateView(ListCreateAPIView):
@@ -65,10 +65,10 @@ class CarListCreateView(ListCreateAPIView):
         return CarPostSerializer
 
     def get_queryset(self):
-        return Car.objects.filter(branch_id=self.request.user.branch_id)
+        return Car.objects.filter(branch=self.request.user.branch)
 
     def perform_create(self, serializer):
-        serializer.save(branch_id=self.request.user.branch_id)
+        serializer.save(branch=self.request.user.branch)
 
 
 class CarRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
@@ -76,7 +76,7 @@ class CarRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
     permission_classes = [IsAuthenticated, IsSameBranch]
 
     def get_queryset(self):
-        return Car.objects.filter(branch_id=self.request.user.branch_id)
+        return Car.objects.filter(branch=self.request.user.branch)
 
     def perform_create(self, serializer):
-        serializer.save(branch_id=self.request.user.branch_id)
+        serializer.save(branch=self.request.user.branch)

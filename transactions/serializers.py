@@ -1,11 +1,38 @@
 from decimal import Decimal
-
 from rest_framework.exceptions import ValidationError
 from rest_framework.serializers import ModelSerializer
-
 from branches.models import Wallet
-from inventory.models import Product
 from .models import ExpenseType, Expense, Salary, ImportList, ImportProduct, Debt, BranchFundTransfer, Lending
+
+
+class DebtSerializer(ModelSerializer):
+    class Meta:
+        model = Debt
+        fields = ['id', 'supplier', 'debt_amount', 'is_debt', 'current_debt', 'branch', 'created_at']
+
+class GetDebtSerializer(ModelSerializer):
+    class Meta:
+        model = Debt
+        fields = ['id', 'debt_amount', 'is_debt', 'created_at']
+
+class PayDebtSerializer(ModelSerializer):
+    class Meta:
+        model = Debt
+        fields = ['id', 'supplier', 'debt_amount', 'is_debt', 'current_debt', 'branch', 'created_at']
+
+
+
+class ImportProductSerializer(ModelSerializer):
+    class Meta:
+        model = ImportProduct
+        fields = ['product', 'amount', 'buy_price', 'total_summ']
+
+class ImportListSerializer(ModelSerializer):
+    products = ImportProductSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = ImportList
+        fields = ['total', 'paid', 'debt', 'supplier', 'description', 'products']
 
 
 class BranchFundTransferSerializer(ModelSerializer):
@@ -19,99 +46,46 @@ class BranchFundTransferPostSerializer(ModelSerializer):
         fields = ['description']
 
 
-class ImportProductSerializer(ModelSerializer):
-    class Meta:
-        model = ImportProduct
-        fields = ['product_id', 'amount', 'buy_price', 'total_summ']
-
-class ImportListSerializer(ModelSerializer):
-    products = ImportProductSerializer(many=True)
-
-    class Meta:
-        model = ImportList
-        fields = ['total', 'paid', 'debt', 'supplier_id', 'description', 'branch_id', 'products']
-
-    def create(self, validated_data):
-        products_data = validated_data.pop('products')
-        import_list = ImportList.objects.create(**validated_data)
-
-        for product_data in products_data:
-            ImportProduct.objects.create(import_list_id=import_list, **product_data)
-
-        if validated_data['debt'] > 0:
-            supplier = validated_data['supplier_id']
-            supplier.debt += validated_data['debt']  # Assuming supplier has a 'debt' field
-            supplier.save()
-
-            for product_data in products_data:
-                product = product_data['product_id']
-                product.amount += product_data['amount']  # Assuming product has an 'amount' field
-                product.save()
-
-        return import_list
-
-
-class GiveLendingSerializer(ModelSerializer):
+class GivePayLendingSerializer(ModelSerializer):
     class Meta:
         model = Lending
-        fields = ['client_id', 'lending_amount']
+        fields = ['client', 'lending_amount']
 
-    def create(self, validated_data):
-        client = validated_data['client_id']
-        client.lending += validated_data['lending_amount']
-        client.save()
-        validated_data['is_lending'] = True
-        validated_data['current_lending'] = client.lending
-        return Lending.objects.create(**validated_data)
-
-
-class PayLendingSerializer(ModelSerializer):
-    class Meta:
-        model = Lending
-        fields = ['client_id', 'lending_amount']
-
-    def create(self, validated_data):
-        client = validated_data['client_id']
-        client.lending -= validated_data['lending_amount']
-        client.save()
-        validated_data['is_lending'] = False
-        validated_data['current_lending'] = client.lending
-        return Lending.objects.create(**validated_data)
 
 
 class LendingListSerializer(ModelSerializer):
     class Meta:
         model = Lending
-        fields = ['id', 'client_id', 'lending_amount', 'current_lending', 'created_at']
+        fields = ['id', 'client', 'lending_amount', 'current_lending', 'is_lending', 'created_at']
 
 
 
 class ExpenseTypeSerializer(ModelSerializer):
     class Meta:
         model = ExpenseType
-        fields = ['id', 'name', 'branch_id']
+        fields = ['id', 'name', 'branch']
 
 
 class ExpenseSerializer(ModelSerializer):
     class Meta:
         model = Expense
-        fields = ['id', 'description', 'type', 'amount', 'from_user_id', 'branch_id', 'created_at']
+        fields = ['id', 'description', 'type', 'amount', 'from_user', 'branch', 'created_at']
 
 
 class SalarySerializer(ModelSerializer):
     class Meta:
         model = Salary
-        fields = ['id', 'employee_id', 'description', 'amount', 'from_user_id', 'created_at']
+        fields = ['id', 'employee', 'description', 'amount', 'from_user', 'created_at']
 
 
 class SalaryPostSerializer(ModelSerializer):
     class Meta:
         model = Salary
-        fields = ['id', 'employee_id', 'description', 'amount']
+        fields = ['id', 'employee', 'description', 'amount']
 
     def create(self, validated_data):
         wallet = Wallet.objects.last()
-        employee = validated_data['employee_id']
+        employee = validated_data['employee']
         position = employee.position
         if position == 'manager':
             pass
@@ -124,9 +98,3 @@ class SalaryPostSerializer(ModelSerializer):
         employee.save()
 
         return Lending.objects.create(**validated_data)
-
-
-class DebtSerializer(ModelSerializer):
-    class Meta:
-        model = Debt
-        fields = ['id', 'supplier_id', 'debt_amount', 'is_debt', 'current_debt', 'branch_id', 'created_at']
