@@ -73,6 +73,7 @@ class ExpenseTypeSerializer(ModelSerializer):
     class Meta:
         model = ExpenseType
         fields = ['id', 'name', 'branch']
+        read_only_fields = ['id', 'branch']
 
 
 class ExpenseSerializer(ModelSerializer):
