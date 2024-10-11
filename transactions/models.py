@@ -144,6 +144,17 @@ class Expense(models.Model):
     def __str__(self):
         return f"{self.type.name} - {self.description}"
 
+    def save(self, *args, **kwargs):
+        with transaction.atomic():
+            if self.pk:
+                old_instance = Expense.objects.get(pk=self.pk)
+                old_amount = old_instance.amount
+                self.branch.balance += old_amount
+
+            super().save(*args, **kwargs)
+            self.branch.balance -= self.amount
+            self.branch.save()
+
 
 class Salary(models.Model):
     employee = models.ForeignKey(Employee, on_delete=models.CASCADE, verbose_name=_('Employee'), related_name='for_employee')

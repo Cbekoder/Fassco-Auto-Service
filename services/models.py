@@ -1,7 +1,7 @@
 from decimal import Decimal
 from email.policy import default
 
-from django.db import models
+from django.db import models, transaction
 from django.utils.translation import gettext_lazy as _
 from users.models import Employee
 from inventory.models import Branch, Car, Service, Product
@@ -53,6 +53,7 @@ class OrderService(models.Model):
 
     mechanic = models.ForeignKey(Employee, on_delete=models.SET_NULL, null=True,
                                verbose_name=_('Master'))
+    part = models.FloatField(blank=True, null=True, verbose_name=_('Part'))
 
     class Meta:
         verbose_name = _('Order service')
@@ -60,6 +61,12 @@ class OrderService(models.Model):
 
     def __str__(self):
         return f'{self.order.description} - {self.service.name}'
+
+    def save(self, *args, **kwargs):
+        with transaction.atomic():
+            super().save(*args, **kwargs)
+            
+
 
 
 class OrderProduct(models.Model):

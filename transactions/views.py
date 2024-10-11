@@ -150,6 +150,12 @@ class ExpenseListCreateView(ListCreateAPIView):
     serializer_class = ExpenseSerializer
     permission_classes = [IsAuthenticated]
 
+    def perform_create(self, serializer):
+        serializer.save(
+            from_user = self.request.user,
+            branch=self.request.user.branch
+        )
+
 
 class ExpenseDetailView(RetrieveUpdateDestroyAPIView):
     queryset = Expense.objects.all()

@@ -80,6 +80,7 @@ class ExpenseSerializer(ModelSerializer):
     class Meta:
         model = Expense
         fields = ['id', 'description', 'type', 'amount', 'from_user', 'branch', 'created_at']
+        read_only_fields = ['id', 'from_user', 'branch']
 
 
 class SalarySerializer(ModelSerializer):
