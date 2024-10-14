@@ -8,11 +8,11 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-10-02 18:39+0500\n"
+"POT-Creation-Date: 2024-10-14 08:22+0500\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
-"Language-Team: LANGUAGE <LL@li.org>\n"
-"Language: \n"
+"Language-Team: Russian <ru@li.org>\n"
+"Language: ru\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -20,14 +20,393 @@ msgstr ""
 "n%10<=4 && (n%100<12 || n%100>14) ? 1 : n%10==0 || (n%10>=5 && n%10<=9) || "
 "(n%100>=11 && n%100<=14)? 2 : 3);\n"
 
-#: core/settings.py:186
+#: branches/apps.py:7
+msgid "Company Branches"
+msgstr "Филиалы компании"
+
+#: branches/models.py:12 branches/models.py:13
+msgid "Wallet"
+msgstr "Кошелек"
+
+#: branches/models.py:17
+msgid "There can be only one Wallet instance."
+msgstr "Может быть только один экземпляр кошелька."
+
+#: branches/models.py:25 inventory/models.py:12 inventory/models.py:35
+#: inventory/models.py:49 transactions/models.py:166
+msgid "Name"
+msgstr "Имя"
+
+#: branches/models.py:26
+msgid "Address"
+msgstr "Адрес"
+
+#: branches/models.py:27
+msgid "Phone number"
+msgstr "Номер телефона"
+
+#: branches/models.py:28
+msgid "Balance"
+msgstr "Баланс"
+
+#: branches/models.py:29 inventory/models.py:22 inventory/models.py:60
+#: services/models.py:24 transactions/models.py:19 transactions/models.py:62
+#: transactions/models.py:183 transactions/models.py:213
+#: transactions/models.py:248
+msgid "Created at"
+msgstr "Дата создания"
+
+#: branches/models.py:32
+#, fuzzy
+#| msgid "Branch"
+msgid "Branch "
+msgstr "Филиал"
+
+#: branches/models.py:33
+msgid "Branches"
+msgstr "Филиалы"
+
+#: core/settings.py:133 core/settings.py:134 core/settings.py:135
+msgid "Auto Servis"
+msgstr "Автосервис"
+
+#: core/settings.py:136
+msgid "Admin panelga xush kelibsiz!"
+msgstr "Добро пожаловать в панель администратора!"
+
+#: core/settings.py:142
+msgid "Acme Library Ltd"
+msgstr "Acme Library Ltd"
+
+#: core/settings.py:204
 msgid "Russian"
 msgstr "Русский"
 
-#: core/settings.py:187
+#: core/settings.py:205
 msgid "Uzbek"
 msgstr "Узбекский"
 
-#: core/settings.py:188
+#: core/settings.py:206
 msgid "English"
 msgstr "Английский"
+
+#: inventory/apps.py:8
+msgid "Inventory"
+msgstr "Инвентарь"
+
+#: inventory/models.py:11
+msgid "Code"
+msgstr "Код"
+
+#: inventory/models.py:13 services/models.py:89 transactions/models.py:180
+#: transactions/models.py:210
+msgid "Amount"
+msgstr "Количество"
+
+#: inventory/models.py:14
+msgid "Unit"
+msgstr "Единица измерения"
+
+#: inventory/models.py:15
+msgid "Import price"
+msgstr "Цена закупки"
+
+#: inventory/models.py:16
+msgid "Export price"
+msgstr "Цена продажи"
+
+#: inventory/models.py:17
+msgid "Min amount"
+msgstr "Минимальное количество"
+
+#: inventory/models.py:18
+msgid "Max discount"
+msgstr "Максимальная скидка"
+
+#: inventory/models.py:20 transactions/models.py:14 transactions/models.py:59
+#: users/models.py:30
+msgid "Supplier"
+msgstr "Поставщик"
+
+#: inventory/models.py:21 inventory/models.py:38 inventory/models.py:61
+#: services/models.py:21 transactions/models.py:20 transactions/models.py:63
+#: transactions/models.py:167 transactions/models.py:184
+#: transactions/models.py:214 transactions/models.py:249
+msgid "Branch"
+msgstr "Филиал"
+
+#: inventory/models.py:23
+msgid "Updated at"
+msgstr "Дата обновления"
+
+#: inventory/models.py:26 transactions/models.py:93
+msgid "Product"
+msgstr "Продукт"
+
+#: inventory/models.py:27
+msgid "Products"
+msgstr "Продукты"
+
+#: inventory/models.py:36
+msgid "Price"
+msgstr "Цена"
+
+#: inventory/models.py:41
+msgid "Service"
+msgstr "Услуга"
+
+#: inventory/models.py:42 services/apps.py:8
+msgid "Services"
+msgstr "Услуги"
+
+#: inventory/models.py:50
+msgid "Brand"
+msgstr "Бренд"
+
+#: inventory/models.py:51
+msgid "Color"
+msgstr "Цвет"
+
+#: inventory/models.py:52
+msgid "State number"
+msgstr "Госномер"
+
+#: inventory/models.py:53
+msgid "Is sold"
+msgstr "Продано"
+
+#: inventory/models.py:55 services/models.py:17
+msgid "ODO mileage"
+msgstr "Пробег ODO"
+
+#: inventory/models.py:56 services/models.py:18
+msgid "HEV mileage"
+msgstr "Пробег HEV"
+
+#: inventory/models.py:57 services/models.py:19
+msgid "EV mileage"
+msgstr "Пробег EV"
+
+#: inventory/models.py:59
+msgid "Client id"
+msgstr "ID клиента"
+
+#: inventory/models.py:64 services/models.py:11
+msgid "Car"
+msgstr "Автомобиль"
+
+#: inventory/models.py:65
+msgid "Cars"
+msgstr "Автомобили"
+
+#: services/models.py:12 services/models.py:63 services/models.py:93
+#: transactions/models.py:60 transactions/models.py:178
+#: transactions/models.py:209
+msgid "Description"
+msgstr "Описание"
+
+#: services/models.py:13 services/models.py:62 services/models.py:90
+#: transactions/models.py:56
+msgid "Total"
+msgstr "Итого"
+
+#: services/models.py:14 transactions/models.py:57
+msgid "Paid"
+msgstr "Оплачено"
+
+#: services/models.py:15 transactions/models.py:23 transactions/models.py:58
+#: transactions/models.py:94
+msgid "Debt"
+msgstr "Долг"
+
+#: services/models.py:22 users/models.py:39
+msgid "Manager"
+msgstr "Менеджер"
+
+#: services/models.py:27
+msgid "Order"
+msgstr "Заказ"
+
+#: services/models.py:28
+msgid "Orders"
+msgstr "Заказы"
+
+#: services/models.py:64
+msgid "Part"
+msgstr "Часть"
+
+#: services/models.py:65
+msgid "Master"
+msgstr "Мастер"
+
+#: services/models.py:68
+msgid "Order service"
+msgstr "Услуга заказа"
+
+#: services/models.py:69
+msgid "Order services"
+msgstr "Услуги заказа"
+
+#: services/models.py:92
+msgid "Discount"
+msgstr "Скидка"
+
+#: services/models.py:96
+msgid "Order product"
+msgstr "Продукт заказа"
+
+#: services/models.py:97
+msgid "Order products"
+msgstr "Продукты заказа"
+
+#: transactions/apps.py:8
+msgid "Transactions"
+msgstr "Транзакции"
+
+#: transactions/models.py:15
+msgid "Debt amount"
+msgstr "Сумма долга"
+
+#: transactions/models.py:16
+msgid "Is debt"
+msgstr "Долг"
+
+#: transactions/models.py:17
+msgid "Current debt"
+msgstr "Текущий долг"
+
+#: transactions/models.py:24
+msgid "Debts"
+msgstr "Долги"
+
+#: transactions/models.py:66 transactions/models.py:97
+msgid "Import list"
+msgstr "Список импорта"
+
+#: transactions/models.py:67
+msgid "Import lists"
+msgstr "Списки импорта"
+
+#: transactions/models.py:95
+msgid "Buy price"
+msgstr "Цена закупки"
+
+#: transactions/models.py:96
+msgid "Total summ"
+msgstr "Общая сумма"
+
+#: transactions/models.py:100
+msgid "Import product"
+msgstr "Импортный продукт"
+
+#: transactions/models.py:101
+msgid "Import products"
+msgstr "Импортные продукты"
+
+#: transactions/models.py:150
+msgid "Daily fund amount"
+msgstr "Сумма ежедневного фонда"
+
+#: transactions/models.py:157
+msgid "Branch Fund"
+msgstr "Фонд филиала"
+
+#: transactions/models.py:158
+msgid "Branch Funds"
+msgstr "Фонды филиалов"
+
+#: transactions/models.py:170
+msgid "Expense Type"
+msgstr "Тип расходов"
+
+#: transactions/models.py:171
+msgid "Expense Types"
+msgstr "Типы расходов"
+
+#: transactions/models.py:179
+msgid "Type"
+msgstr "Тип"
+
+#: transactions/models.py:181 transactions/models.py:211 users/models.py:10
+msgid "User"
+msgstr "Пользователь"
+
+#: transactions/models.py:187
+msgid "Expense"
+msgstr "Расход"
+
+#: transactions/models.py:188
+msgid "Expenses"
+msgstr "Расходы"
+
+#: transactions/models.py:208 users/models.py:52
+msgid "Employee"
+msgstr "Сотрудник"
+
+#: transactions/models.py:217
+msgid "Salary"
+msgstr "Зарплата"
+
+#: transactions/models.py:218
+msgid "Salaries"
+msgstr "Зарплаты"
+
+#: transactions/models.py:243 users/models.py:64
+msgid "Client"
+msgstr "Клиент"
+
+#: transactions/models.py:244
+msgid "Lending amount"
+msgstr "Сумма кредита"
+
+#: transactions/models.py:245
+msgid "Is lending"
+msgstr "Кредит"
+
+#: transactions/models.py:246
+msgid "Current lending"
+msgstr "Текущий кредит"
+
+#: transactions/models.py:252
+msgid "Lending"
+msgstr "Кредит"
+
+#: transactions/models.py:253
+msgid "Lendings"
+msgstr "Кредиты"
+
+#: users/admin.py:19
+msgid "Personal info"
+msgstr "Личная информация"
+
+#: users/admin.py:20
+msgid "Permissions"
+msgstr "Разрешения"
+
+#: users/admin.py:23
+msgid "Important dates"
+msgstr "Важные даты"
+
+#: users/apps.py:8 users/models.py:11
+msgid "Users"
+msgstr "Пользователь"
+
+#: users/models.py:31
+msgid "Suppliers"
+msgstr "Поставщик"
+
+#: users/models.py:40
+msgid "Mechanic"
+msgstr "Механик"
+
+#: users/models.py:41
+msgid "Other"
+msgstr "Другое"
+
+#: users/models.py:53
+msgid "Employees"
+msgstr "Сотрудник"
+
+#: users/models.py:65
+msgid "Clients"
+msgstr "Клиент"

@@ -1,7 +1,8 @@
 from decimal import Decimal
 from rest_framework.exceptions import ValidationError
+from rest_framework.fields import SerializerMethodField
 from rest_framework.serializers import ModelSerializer
-from branches.models import Wallet
+from inventory.serializers import ProductImportDetailSerializer
 from .models import ExpenseType, Expense, Salary, ImportList, ImportProduct, Debt, BranchFundTransfer, Lending
 
 
@@ -10,38 +11,59 @@ class DebtSerializer(ModelSerializer):
         model = Debt
         fields = ['id', 'supplier', 'debt_amount', 'is_debt', 'current_debt', 'branch', 'created_at']
 
-class GetDebtSerializer(ModelSerializer):
-    class Meta:
-        model = Debt
-        fields = ['id', 'debt_amount', 'is_debt', 'created_at']
-
-class PayDebtSerializer(ModelSerializer):
+class DebtUpdateSerializer(ModelSerializer):
     class Meta:
         model = Debt
         fields = ['id', 'supplier', 'debt_amount', 'is_debt', 'current_debt', 'branch', 'created_at']
+        read_only_fields = ['supplier', 'is_debt', 'current_debt', 'branch', 'created_at']
+
+
+class GetPayDebtSerializer(ModelSerializer):
+    class Meta:
+        model = Debt
+        fields = ['id', 'supplier', 'debt_amount', 'is_debt', 'current_debt', 'branch', 'created_at']
+        read_only_fields = ['is_debt', 'current_debt', 'branch', 'created_at']
 
 
 class ImportProductSerializer(ModelSerializer):
+    total_summ = SerializerMethodField()
     class Meta:
         model = ImportProduct
-        fields = ['product', 'amount', 'buy_price', 'total_summ']
+        fields = ['id', 'product', 'amount', 'buy_price', 'total_summ']
+        read_only_fields = ['total_summ']
+
+    def get_total_summ(self, obj):
+        return Decimal(obj.amount) * obj.buy_price
 
 class ImportListSerializer(ModelSerializer):
     products = ImportProductSerializer(many=True)
 
     class Meta:
         model = ImportList
-        fields = ['total', 'paid', 'debt', 'supplier', 'description', 'branch', 'products']
+        fields = ['id', 'total', 'paid', 'debt', 'supplier', 'description', 'branch', 'products']
+        read_only_fields = ['total', 'debt', 'branch']
+
 
     def create(self, validated_data):
         products_data = validated_data.pop('products')
-        import_list = ImportList.objects.create(**validated_data)
+        import_list = ImportList.objects.create(**validated_data, total=0, debt=0)
         products_list = []
+        total = 0
         for product_data in products_data:
             pro_cr = ImportProduct.objects.create(import_list=import_list, **product_data)
+            total += pro_cr.total_summ
             products_list.append(pro_cr)
+        import_list.total = total
+        import_list.save()
         import_list.products = products_list
         return import_list
+
+class GetImportListSerializer(ModelSerializer):
+    products = ImportProductSerializer(source='importproduct_set', many=True,)
+
+    class Meta:
+        model = ImportList
+        fields = ['total', 'paid', 'debt', 'supplier', 'description', 'branch', 'products']
 
 
 class BranchFundTransferSerializer(ModelSerializer):
@@ -67,6 +89,10 @@ class LendingListSerializer(ModelSerializer):
         model = Lending
         fields = ['id', 'client', 'lending_amount', 'current_lending', 'is_lending', 'created_at']
 
+class LendingUpdateSerializer(ModelSerializer):
+    class Meta:
+        model = Lending
+        fields = ['lending_amount']
 
 
 class ExpenseTypeSerializer(ModelSerializer):
@@ -80,32 +106,17 @@ class ExpenseSerializer(ModelSerializer):
     class Meta:
         model = Expense
         fields = ['id', 'description', 'type', 'amount', 'from_user', 'branch', 'created_at']
-        read_only_fields = ['id', 'from_user', 'branch']
+        read_only_fields = ['id', 'from_user', 'branch', 'created_at']
 
 
 class SalarySerializer(ModelSerializer):
     class Meta:
         model = Salary
-        fields = ['id', 'employee', 'description', 'amount', 'from_user', 'created_at']
+        fields = ['id', 'employee', 'description', 'amount', 'from_user', 'branch', 'created_at']
+        read_only_fields = ['id', 'from_user', 'branch', 'created_at']
 
-
-class SalaryPostSerializer(ModelSerializer):
+class SalaryUpdateSerializer(ModelSerializer):
     class Meta:
         model = Salary
-        fields = ['id', 'employee', 'description', 'amount']
-
-    def create(self, validated_data):
-        wallet = Wallet.objects.last()
-        employee = validated_data['employee']
-        position = employee.position
-        if position == 'manager':
-            pass
-        elif position == 'mechanic':
-            pass
-        elif position == 'other':
-            employee.balance -= validated_data['amount']
-            wallet.balance -= validated_data['amount']
-            wallet.save()
-        employee.save()
-
-        return Lending.objects.create(**validated_data)
+        fields = ['id', 'employee', 'description', 'amount', 'from_user', 'branch', 'created_at']
+        read_only_fields = ['id', 'employee', 'from_user', 'branch', 'created_at']

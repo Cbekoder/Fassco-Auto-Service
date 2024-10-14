@@ -7,6 +7,7 @@ class ProductSerializer(ModelSerializer):
         model = Product
         fields = ['id', 'code', 'name', 'amount', 'unit', 'arrival_price', 'sell_price', 'min_amount', 'max_discount',
                   'supplier', 'branch', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'branch', 'created_at', 'updated_at']
 
     def validate(self, data):
         if data.get('sell_price') is not None and data['sell_price'] < data['arrival_price']:
@@ -17,24 +18,17 @@ class ProductSerializer(ModelSerializer):
 
         return data
 
-class ProductPostSerializer(ModelSerializer):
+
+class ProductImportDetailSerializer(ModelSerializer):
     class Meta:
         model = Product
-        fields = ['id', 'code', 'name', 'amount', 'unit', 'arrival_price', 'sell_price', 'min_amount', 'max_discount', 'supplier',]
-
-
-
+        fields = ['id', 'code', 'name', 'amount', 'unit', 'arrival_price']
 
 class ServiceSerializer(ModelSerializer):
     class Meta:
         model = Service
-        fields = ['id', 'name', 'price']
-
-
-class ServicePostSerializer(ModelSerializer):
-    class Meta:
-        model = Service
-        fields = ['name', 'price']
+        fields = ['id', 'name', 'price', 'branch']
+        read_only_fields = ['id', 'branch']
 
 
 
@@ -43,15 +37,8 @@ class CarSerializer(ModelSerializer):
         model = Car
         fields = [
             'id', 'name', 'brand', 'color', 'state_number', 'is_sold',
-            'odo_mileage', 'hev_mileage', 'ev_mileage', 'client',
+            'odo_mileage', 'hev_mileage', 'ev_mileage', 'client', 'branch',
             'created_at'
         ]
-
-class CarPostSerializer(ModelSerializer):
-    class Meta:
-        model = Car
-        fields = [
-            'name', 'brand', 'color', 'state_number',
-            'odo_mileage', 'hev_mileage', 'ev_mileage', 'client'
-        ]
+        read_only_fields = ['id', 'is_sold', 'branch', 'created_at']
 

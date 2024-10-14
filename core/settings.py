@@ -206,10 +206,6 @@ LANGUAGES = (
     ('en', _('English')),
 )
 
-MODELTRANSLATION_DEFAULT_LANGUAGE = 'ru'
-
-MODELTRANSLATION_LANGUAGES = ('ru', 'uz', 'en')
-
 LOCALE_PATHS = [
     BASE_DIR / 'locale/',
 ]

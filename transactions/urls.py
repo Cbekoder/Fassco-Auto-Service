@@ -1,24 +1,28 @@
 from django.urls import path
 from .views import (
     ExpenseTypeListCreateView, ExpenseTypeDetailView, ExpenseListCreateView, ExpenseDetailView,
-    SalaryListCreateView, SalaryDetailView, ImportListCreateView, DebtListView, DebtDetailView,
+    SalaryListCreateView, SalaryDetailView, ImportCreateView, DebtListView, DebtDetailView,
     BranchFundTransferListCreateView, GiveLendingCreateView, PayLendingCreateView, GetDebtCreateView,
-    PayDebtCreateView
+    PayDebtCreateView, ImportListAPIView, ImportListDetailAPIView, LendingListView, LendingDetailView
 )
 urlpatterns = [
     path('debt-get/', GetDebtCreateView.as_view(), name='get-debt'),
     path('debt-pay/', PayDebtCreateView.as_view(), name='get-debt'),
     path('debts/', DebtListView.as_view(), name='debt-list-create'),
-    path('debts/<int:pk>/', DebtDetailView.as_view(), name='debt-detail'),
+    path('debt/<int:pk>/', DebtDetailView.as_view(), name='debt-detail'),
     path('daily-branch-fund/', BranchFundTransferListCreateView.as_view(), name='daily-branch-fund'),
-    path('import/', ImportListCreateView.as_view(), name='import-list-create'),
+    path('import/', ImportCreateView.as_view(), name='import-list-create'),
+    path('import-lists/', ImportListAPIView.as_view(), name='import-list'),
+    path('import-list/<int:pk>/', ImportListDetailAPIView.as_view(), name='import-list-detail'),
     path('lending-give/', GiveLendingCreateView.as_view(), name='give-lending-list-create'),  # For listing and creating lendings
     path('lending-pay/', PayLendingCreateView.as_view(), name='pay-lending-list-create'),  # For listing and creating lendings
+    path('lendings/', LendingListView.as_view(), name='lending-list-create'),  # For listing and creating lendings
+    path('lending/<int:pk>', LendingDetailView.as_view(), name='lending-update-delete'),  # For listing and creating lendings
     path('expense-types/', ExpenseTypeListCreateView.as_view(), name='expense-type-list-create'),
-    path('expense-types/<int:pk>/', ExpenseTypeDetailView.as_view(), name='expense-type-detail'),
+    path('expense-type/<int:pk>/', ExpenseTypeDetailView.as_view(), name='expense-type-detail'),
     path('expenses/', ExpenseListCreateView.as_view(), name='expense-list-create'),
-    path('expenses/<int:pk>/', ExpenseDetailView.as_view(), name='expense-detail'),
+    path('expense/<int:pk>/', ExpenseDetailView.as_view(), name='expense-detail'),
     path('salaries/', SalaryListCreateView.as_view(), name='salary-list-create'),
-    path('salaries/<int:pk>/', SalaryDetailView.as_view(), name='salary-detail'),
+    path('salary/<int:pk>/', SalaryDetailView.as_view(), name='salary-detail'),
 ]
 

@@ -6,12 +6,14 @@ from .serializers import OrderPostSerializer, OrderListSerializer
 
 
 class OrderListCreateView(ListCreateAPIView):
-    permission_classes = (IsAuthenticated,)
     queryset = Order.objects.all()
+    permission_classes = (IsAuthenticated,)
     serializer_class = OrderListSerializer
 
     def get_queryset(self):
-        return self.queryset.filter(branch=self.request.user.branch)
+        if self.request.user.is_authenticated:
+            return self.queryset.filter(branch=self.request.user.branch)
+        return self.queryset.none()
 
     def get_serializer_class(self):
         if self.request.method == 'GET':
@@ -20,9 +22,11 @@ class OrderListCreateView(ListCreateAPIView):
 
 
 class OrderDetailView(RetrieveUpdateDestroyAPIView):
-    permission_classes = (IsAuthenticated,)
     queryset = Order.objects.all()
+    permission_classes = (IsAuthenticated,)
     serializer_class = OrderListSerializer
 
     def get_queryset(self):
-        return self.queryset.filter(branch=self.request.user.branch)
+        if self.request.user.is_authenticated:
+            return self.queryset.filter(branch=self.request.user.branch)
+        return self.queryset.none()

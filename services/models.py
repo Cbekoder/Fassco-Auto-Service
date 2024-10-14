@@ -1,8 +1,8 @@
 from decimal import Decimal
-from email.policy import default
-
 from django.db import models, transaction
 from django.utils.translation import gettext_lazy as _
+from rest_framework.exceptions import ValidationError
+
 from users.models import Employee
 from inventory.models import Branch, Car, Service, Product
 
@@ -20,8 +20,7 @@ class Order(models.Model):
 
     branch = models.ForeignKey(Branch, on_delete=models.CASCADE, verbose_name=_('Branch'))
     manager = models.ForeignKey(Employee, on_delete=models.SET_NULL, null=True, verbose_name=_('Manager'))
-    manager_share = models.DecimalField(default=Decimal('0.00'), max_digits=10, decimal_places=2,
-                                        verbose_name=_('Manager share'))
+
     created_at = models.DateTimeField(auto_now_add=True, verbose_name=_('Created at'))
 
     class Meta:
@@ -32,17 +31,29 @@ class Order(models.Model):
         return self.description
 
     def save(self, *args, **kwargs):
-        super().save(*args, **kwargs)
+        with transaction.atomic():
+            if self.pk:
+                old_instance = Order.objects.get(pk=self.pk)
+                self.car.client.lending -= old_instance.landing
+                self.branch.balance -= old_instance.paid
 
-        if self.odo_mileage:
-            self.car.odo_mileage = self.odo_mileage
-            self.car.save()
-        if self.hev_mileage:
-            self.car.hev_mileage = self.hev_mileage
-            self.car.save()
-        if self.ev_mileage:
-            self.car.ev_mileage = self.ev_mileage
-            self.car.save()
+            super().save(*args, **kwargs)
+
+            self.car.client.lending += self.landing
+            self.car.client.save()
+
+            self.branch.balance += self.paid
+            self.branch.save()
+
+            if self.odo_mileage:
+                self.car.odo_mileage = self.odo_mileage
+                self.car.save()
+            if self.hev_mileage:
+                self.car.hev_mileage = self.hev_mileage
+                self.car.save()
+            if self.ev_mileage:
+                self.car.ev_mileage = self.ev_mileage
+                self.car.save()
 
 
 class OrderService(models.Model):
@@ -50,10 +61,8 @@ class OrderService(models.Model):
     service = models.ForeignKey(Service, on_delete=models.CASCADE)
     total = models.DecimalField(default=Decimal('0.00'), max_digits=10, decimal_places=2, verbose_name=_('Total'))
     description = models.TextField(blank=True, null=True, verbose_name=_('Description'))
-
-    mechanic = models.ForeignKey(Employee, on_delete=models.SET_NULL, null=True,
-                               verbose_name=_('Master'))
     part = models.FloatField(blank=True, null=True, verbose_name=_('Part'))
+    mechanic = models.ForeignKey(Employee, on_delete=models.SET_NULL, null=True, verbose_name=_('Master'))
 
     class Meta:
         verbose_name = _('Order service')
@@ -64,7 +73,12 @@ class OrderService(models.Model):
 
     def save(self, *args, **kwargs):
         with transaction.atomic():
+            if self.pk:
+                old_instance = OrderService.objects.get(pk=self.pk)
+                self.mechanic.balance -= self.mechanic.kpi * old_instance.part
             super().save(*args, **kwargs)
+            self.mechanic.balance += self.mechanic.kpi * self.part
+            self.mechanic.save()
             
 
 
@@ -86,13 +100,27 @@ class OrderProduct(models.Model):
         return f'{self.order.description} - {self.product.name}'
 
     def save(self, *args, **kwargs):
-        if self.pk:
-            old_instance = OrderProduct.objects.get(pk=self.pk)
-            if old_instance.amount != self.amount:
-                difference = self.amount - old_instance.amount
-                self.product.amount -= difference
+        with transaction.atomic():
+            if self.pk:
+                old_instance = OrderProduct.objects.get(pk=self.pk)
+                self.product.amount += old_instance.amount
+
+                manager = self.order.manager
+                manager.balance -= (manager.commission_per / 100) * old_instance.amount * (
+                            self.product.sell_price - self.product.sell_price)
+
+            if self.total != self.amount * self.product.sell_price:
+                self.total = self.amount * self.product.sell_price
+
+            super().save(*args, **kwargs)
+
+            manager = self.order.manager
+            manager.balance += (manager.commission_per / 100) * self.amount * (self.product.sell_price - self.product.sell_price)
+            manager.save()
+
+            if self.product.amount >= self.amount:
+                self.product.amount -= self.amount
                 self.product.save()
-        else:
-            self.product.amount -= self.amount
-            self.product.save()
-        super().save(*args, **kwargs)
+            else:
+                raise ValidationError(
+                    f"Not enough product stock. Available: {self.product.amount}, requested: {self.amount}.")
