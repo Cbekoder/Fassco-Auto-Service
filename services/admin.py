@@ -1,12 +1,21 @@
 from django.contrib import admin
 from .models import Order, OrderService, OrderProduct
 
+class OrderProductInline(admin.StackedInline):
+    model = OrderProduct
+    extra = 0
+
+class OrderServiceInline(admin.StackedInline):
+    model = OrderService
+    extra = 0
+
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
     list_display = ('car', 'description', 'total', 'paid', 'landing', 'odo_mileage', 'hev_mileage', 'ev_mileage', 'branch', 'created_at')
-    search_fields = ('car__name', 'description', 'branch__name')  # Enable search by car, description, and branch name
-    list_filter = ('branch', 'created_at')  # Filter by branch and creation date
+    search_fields = ('car__name', 'description', 'branch__name')
+    list_filter = ('branch', 'created_at')
     ordering = ('-created_at',)  # Order by newest first
+    inlines = [OrderProductInline, OrderServiceInline]
 
 
 @admin.register(OrderService)

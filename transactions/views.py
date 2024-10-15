@@ -72,6 +72,9 @@ class DebtListView(ListAPIView):
             )
         ]
     )
+    def get(self, request, *args, **kwargs):
+        return super().get(request, *args, **kwargs)
+
     def get_queryset(self):
         if self.request.user.is_authenticated:
             queryset = self.queryset.filter(branch=self.request.user.branch)
@@ -268,8 +271,31 @@ class LendingListView(ListAPIView):
     serializer_class = LendingListSerializer
     permission_classes = [IsAuthenticated]
 
+    @swagger_auto_schema(
+        manual_parameters=[
+            openapi.Parameter(
+                name='is_lending',
+                in_=openapi.IN_QUERY,
+                description="Filter by whether it's a lending (true or false)",
+                type=openapi.TYPE_BOOLEAN
+            )
+        ]
+    )
+    def get(self, request, *args, **kwargs):
+        return super().get(request, *args, **kwargs)
+
     def get_queryset(self):
         if self.request.user.is_authenticated:
+            queryset = self.queryset.filter(branch=self.request.user.branch)
+            is_lending = self.request.query_params.get('is_debt')
+
+            if is_lending is not None:
+                if is_lending.lower() == 'true':
+                    queryset = queryset.filter(is_lending=True)
+                elif is_lending.lower() == 'false':
+                    queryset = queryset.filter(is_lending=False)
+
+            return queryset
             return self.queryset.filter(branch=self.request.user.branch)
         return self.queryset.none()
 

@@ -390,8 +390,6 @@ msgid "Users"
 msgstr "Foydalanuvchilar"
 
 #: users/models.py:31
-#, fuzzy
-#| msgid "Supplier"
 msgid "Suppliers"
 msgstr "Yetkazib beruvchi"
 
@@ -404,13 +402,9 @@ msgid "Other"
 msgstr "Boshqa"
 
 #: users/models.py:53
-#, fuzzy
-#| msgid "Employee"
 msgid "Employees"
 msgstr "Xodim"
 
 #: users/models.py:65
-#, fuzzy
-#| msgid "Client"
 msgid "Clients"
 msgstr "Mijoz"
