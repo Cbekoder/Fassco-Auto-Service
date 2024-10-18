@@ -22,10 +22,10 @@ load_dotenv()
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.getenv('SECRET_KEY')
+SECRET_KEY = 'django-insecure-lvwp=j+%=m4s+$2ji%kurxiwq(-9sb(c&fq$$_@)y*nrljb1sc'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.getenv('DEBUG')
+DEBUG = False
 
 ALLOWED_HOSTS = ["*"]
 
@@ -221,7 +221,7 @@ USE_I18N = True
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
 STATIC_URL = 'static/'
-if not DEBUG:
+if DEBUG:
     STATICFILES_DIRS = [BASE_DIR / 'static']
 else:
     STATIC_ROOT = BASE_DIR / 'static'
