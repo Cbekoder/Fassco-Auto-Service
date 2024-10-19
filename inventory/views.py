@@ -14,7 +14,7 @@ class ProductListCreateView(ListCreateAPIView):
 
     def get_queryset(self):
         if self.request.user.is_authenticated:
-            return self.queryset.filter(branch=self.request.user.branch)
+            return self.queryset.filter(branch=self.request.user.branch).order_by('-created_at')
         return self.queryset.none()
 
     def perform_create(self, serializer):
@@ -37,7 +37,7 @@ class ServiceListCreateView(ListCreateAPIView):
     permission_classes = [IsAuthenticated, IsSameBranch]
 
     def get_queryset(self):
-        return Service.objects.filter(branch=self.request.user.branch)
+        return self.queryset.filter(branch=self.request.user.branch).order_by('-created_at')
 
     def perform_create(self, serializer):
         serializer.save(branch=self.request.user.branch)
@@ -50,7 +50,7 @@ class ServiceRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
 
     def get_queryset(self):
         if self.request.user.is_authenticated:
-            return self.queryset.filter(branch=self.request.user.branch)
+            return self.queryset.filter(branch=self.request.user.branch).order_by('-created_at')
         return self.queryset.none()
 
 class CarListCreateView(ListCreateAPIView):
@@ -73,7 +73,7 @@ class CarListCreateView(ListCreateAPIView):
 
     def get_queryset(self):
         if self.request.user.is_authenticated:
-            queryset = self.queryset.filter(branch=self.request.user.branch)
+            queryset = self.queryset.filter(branch=self.request.user.branch).order_by('-created_at')
             client_id = self.request.query_params.get('client_id')
             if client_id:
                 queryset = queryset.filter(client__id=client_id)

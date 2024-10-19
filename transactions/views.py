@@ -77,7 +77,7 @@ class DebtListView(ListAPIView):
 
     def get_queryset(self):
         if self.request.user.is_authenticated:
-            queryset = self.queryset.filter(branch=self.request.user.branch)
+            queryset = self.queryset.filter(branch=self.request.user.branch).order_by('-created_at')
             is_debt = self.request.query_params.get('is_debt')
 
             if is_debt is not None:
@@ -111,7 +111,7 @@ class ExpenseTypeListCreateView(ListCreateAPIView):
 
     def get_queryset(self):
         if self.request.user.is_authenticated:
-            return self.queryset.filter(branch=self.request.user.branch)
+            return self.queryset.filter(branch=self.request.user.branch).order_by('-created_at')
         return self.queryset.none()
 
 
@@ -133,7 +133,7 @@ class ExpenseListCreateView(ListCreateAPIView):
 
     def get_queryset(self):
         if self.request.user.is_authenticated:
-            return self.queryset.filter(branch=self.request.user.branch)
+            return self.queryset.filter(branch=self.request.user.branch).order_by('-created_at')
         return self.queryset.none()
 
     def perform_create(self, serializer):
@@ -173,7 +173,7 @@ class ImportListAPIView(ListAPIView):
 
     def get_queryset(self):
         if self.request.user.is_authenticated:
-            return self.queryset.filter(branch=self.request.user.branch)
+            return self.queryset.filter(branch=self.request.user.branch).order_by('-created_at')
         return self.queryset.none()
 
     def get_serializer_class(self):
@@ -188,7 +188,7 @@ class ImportListDetailAPIView(RetrieveUpdateDestroyAPIView):
 
     def get_queryset(self):
         if self.request.user.is_authenticated:
-            return self.queryset.filter(branch=self.request.user.branch)
+            return self.queryset.filter(branch=self.request.user.branch).order_by('-created_at')
         return self.queryset.none()
 
 
@@ -286,7 +286,7 @@ class LendingListView(ListAPIView):
 
     def get_queryset(self):
         if self.request.user.is_authenticated:
-            queryset = self.queryset.filter(branch=self.request.user.branch)
+            queryset = self.queryset.filter(branch=self.request.user.branch).order_by('-created_at')
             is_lending = self.request.query_params.get('is_debt')
 
             if is_lending is not None:
@@ -296,7 +296,6 @@ class LendingListView(ListAPIView):
                     queryset = queryset.filter(is_lending=False)
 
             return queryset
-            return self.queryset.filter(branch=self.request.user.branch)
         return self.queryset.none()
 
 class LendingDetailView(RetrieveUpdateDestroyAPIView):
@@ -323,7 +322,7 @@ class SalaryListCreateView(ListCreateAPIView):
 
     def get_queryset(self):
         if self.request.user.is_authenticated:
-            return self.queryset.filter(branch=self.request.user.branch)
+            return self.queryset.filter(branch=self.request.user.branch).order_by('-created_at')
         return self.queryset.none()
 
 
