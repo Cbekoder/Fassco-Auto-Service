@@ -58,6 +58,6 @@ class OrderListSerializer(ModelSerializer):
         model = Order
         fields = ['id', 'car', 'description', 'total', 'paid', 'landing', 'odo_mileage', 'hev_mileage', 'ev_mileage',
                   'branch', 'manager', 'created_at', 'services', 'products']
-        read_only_fields = ['created_at']
+        read_only_fields = ['branch', 'created_at']
 
 
