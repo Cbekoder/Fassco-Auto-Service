@@ -7,6 +7,7 @@ from .views import *
 
 
 urlpatterns = [
+    path('employees/', EmployeeListView.as_view(), name='employee_list'),
     path('suppliers/', SupplierListCreateView.as_view(), name='supplier_list_create'),
     path('supplier/<int:pk>/', SupplierRetrieveUpdateDestroyView.as_view(), name='supplier_detail'),
     path('managers/', ManagerListCreateView.as_view(), name='manager-list-create'),

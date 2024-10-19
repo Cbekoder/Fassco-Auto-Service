@@ -44,9 +44,10 @@ class WorkerSerializer(ModelSerializer):
             raise ValidationError("Other employees must have a salary.")
         return data
 
-
-
-
+class EmployeeSerializer(ModelSerializer):
+    class Meta:
+        model = Employee
+        fields = ['id', 'first_name', 'last_name', 'phone', 'balance', 'branch']
 
 
 class ClientSerializer(ModelSerializer):

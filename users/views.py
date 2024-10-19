@@ -1,5 +1,5 @@
 from rest_framework import status
-from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView
+from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView, ListAPIView
 from rest_framework.response import Response
 
 from .models import Employee, Supplier, Client
@@ -136,6 +136,17 @@ class ClientListCreateView(ListCreateAPIView):
 class ClientRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
     queryset = Client.objects.all()
     serializer_class = ClientSerializer
+    permission_classes = [IsAuthenticated, IsSameBranch]
+
+    def get_queryset(self):
+        if self.request.user.is_authenticated:
+            return self.queryset.filter(branch=self.request.user.branch)
+        return self.queryset.none()
+
+
+class EmployeeListView(ListAPIView):
+    queryset = Employee.objects.all()
+    serializer_class = EmployeeSerializer
     permission_classes = [IsAuthenticated, IsSameBranch]
 
     def get_queryset(self):
