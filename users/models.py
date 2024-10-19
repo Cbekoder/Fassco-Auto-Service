@@ -34,7 +34,6 @@ class Supplier(UserTemp):
         return f"{self.first_name} {self.last_name}"
 
 
-
 POSITION_CHOICES = (
     ("manager", _("Manager")),
     ("mechanic", _("Mechanic")),

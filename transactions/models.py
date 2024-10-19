@@ -229,7 +229,7 @@ class Salary(models.Model):
                 wallet.balance += old_amount
                 self.employee.balance += old_amount
             super().save(*args, **kwargs)
-            if self.employee >= self.amount:
+            if self.employee.balance >= self.amount:
                 wallet.balance -= self.amount
                 self.employee.balance -= self.amount
                 self.employee.save()

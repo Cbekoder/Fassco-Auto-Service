@@ -60,6 +60,8 @@ class OrderService(models.Model):
     order = models.ForeignKey(Order, on_delete=models.CASCADE)
     service = models.ForeignKey(Service, on_delete=models.CASCADE)
     total = models.DecimalField(default=Decimal('0.00'), max_digits=10, decimal_places=2, verbose_name=_('Total'))
+    discount = models.DecimalField(default=Decimal('0.00'), max_digits=10, decimal_places=2,
+                                   verbose_name=_('Discount'))
     description = models.TextField(blank=True, null=True, verbose_name=_('Description'))
     part = models.FloatField(blank=True, null=True, verbose_name=_('Part'))
     mechanic = models.ForeignKey(Employee, on_delete=models.SET_NULL, null=True, verbose_name=_('Master'))

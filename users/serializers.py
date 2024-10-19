@@ -17,7 +17,7 @@ class SupplierPostSerializer(ModelSerializer):
 class ManagerSerializer(ModelSerializer):
     class Meta:
         model = Employee
-        fields = ['id', 'first_name', 'last_name', 'phone', 'address', 'commission_per']
+        fields = ['id', 'first_name', 'last_name', 'phone', 'address', 'commission_per', 'balance']
 
     def validate(self, data):
         if data.get('commission_per') is None:
@@ -27,7 +27,7 @@ class ManagerSerializer(ModelSerializer):
 class MechanicSerializer(ModelSerializer):
     class Meta:
         model = Employee
-        fields = ['id', 'first_name', 'last_name', 'phone', 'address', 'kpi']
+        fields = ['id', 'first_name', 'last_name', 'phone', 'address', 'kpi', 'balance']
 
     def validate(self, data):
         if data.get('kpi') is None:
@@ -37,7 +37,7 @@ class MechanicSerializer(ModelSerializer):
 class WorkerSerializer(ModelSerializer):
     class Meta:
         model = Employee
-        fields = ['id', 'first_name', 'last_name', 'phone', 'address', 'salary']
+        fields = ['id', 'first_name', 'last_name', 'phone', 'address', 'salary', 'balance']
 
     def validate(self, data):
         if data.get('salary') is None:

@@ -6,7 +6,7 @@ from rest_framework.exceptions import ValidationError
 
 class Wallet(models.Model):
     name = models.CharField(max_length=100, unique=True)
-    balance = models.FloatField(default=0, validators=[MinValueValidator(0)])
+    balance = models.DecimalField(max_digits=15, decimal_places=2, default=0, validators=[MinValueValidator(0)])
 
     class Meta:
         verbose_name = _('Wallet')

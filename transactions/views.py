@@ -183,7 +183,7 @@ class ImportListAPIView(ListAPIView):
 
 class ImportListDetailAPIView(RetrieveUpdateDestroyAPIView):
     queryset = ImportList.objects.all()
-    serializer_class = ImportListSerializer
+    serializer_class = GetImportListSerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
