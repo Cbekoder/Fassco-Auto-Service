@@ -46,7 +46,7 @@ class ImportListSerializer(ModelSerializer):
 
     def create(self, validated_data):
         products_data = validated_data.pop('products')
-        import_list = ImportList.objects.create(**validated_data, total=0, debt=0)
+        import_list = ImportList.objects.create(**validated_data)
         products_list = []
         total = 0
         for product_data in products_data:

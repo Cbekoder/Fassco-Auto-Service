@@ -79,7 +79,7 @@ class OrderService(models.Model):
                 old_instance = OrderService.objects.get(pk=self.pk)
                 self.mechanic.balance -= self.mechanic.kpi * old_instance.part
             super().save(*args, **kwargs)
-            self.mechanic.balance += self.mechanic.kpi * self.part
+            self.mechanic.balance += self.mechanic.kpi * Decimal(self.part)
             self.mechanic.save()
             
 
@@ -111,13 +111,13 @@ class OrderProduct(models.Model):
                 manager.balance -= (manager.commission_per / 100) * old_instance.amount * (
                             self.product.sell_price - self.product.sell_price)
 
-            if self.total != self.amount * self.product.sell_price:
-                self.total = self.amount * self.product.sell_price
+            if self.total != Decimal(self.amount) * self.product.sell_price:
+                self.total = Decimal(self.amount) * self.product.sell_price
 
             super().save(*args, **kwargs)
 
             manager = self.order.manager
-            manager.balance += (manager.commission_per / 100) * self.amount * (self.product.sell_price - self.product.sell_price)
+            manager.balance += Decimal(manager.commission_per / 100) * Decimal(self.amount) * (self.product.sell_price - self.product.sell_price)
             manager.save()
 
             if self.product.amount >= self.amount:

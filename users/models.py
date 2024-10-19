@@ -44,8 +44,8 @@ class Employee(UserTemp):
     position = models.CharField(max_length=15, choices=POSITION_CHOICES)
     balance = models.DecimalField(default=0, max_digits=15, decimal_places=2)
     commission_per = models.IntegerField(default=2, null=True, blank=True)
-    kpi = models.IntegerField(null=True, blank=True)
-    salary = models.IntegerField(null=True, blank=True)
+    kpi = models.DecimalField(default=0, max_digits=15, decimal_places=2)
+    salary = models.DecimalField(default=0, max_digits=15, decimal_places=2)
 
     class Meta:
         verbose_name = _("Employee")

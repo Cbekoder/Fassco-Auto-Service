@@ -1,4 +1,6 @@
 from rest_framework.serializers import ModelSerializer
+
+from users.models import Employee
 from .models import Order, OrderService, OrderProduct
 
 
@@ -27,7 +29,12 @@ class OrderPostSerializer(ModelSerializer):
         services_data = validated_data.pop('services')
         products_data = validated_data.pop('products')
 
-        order = Order.objects.create(**validated_data)
+        manager = validated_data.get('car')
+
+        if isinstance(manager, int):
+            manager = Employee.objects.get(id=manager)
+
+        order = Order.objects.create(**validated_data, branch=manager.branch)
 
         service_responses = []
         product_responses = []
