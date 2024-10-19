@@ -21,7 +21,7 @@ class OrderPostSerializer(ModelSerializer):
         model = Order
         fields = ['car', 'description', 'total', 'paid', 'landing', 'odo_mileage', 'hev_mileage', 'ev_mileage',
                   'branch', 'manager', 'created_at', 'services', 'products']
-        read_only_fields = ['created_at']
+        read_only_fields = ['created_at', 'branch']
 
     def create(self, validated_data):
         services_data = validated_data.pop('services')
