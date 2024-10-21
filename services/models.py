@@ -3,11 +3,12 @@ from django.db import models, transaction
 from django.utils.translation import gettext_lazy as _
 from rest_framework.exceptions import ValidationError
 
-from users.models import Employee
+from users.models import Employee, Client
 from inventory.models import Branch, Car, Service, Product
 
 
 class Order(models.Model):
+    client = models.ForeignKey(Client, on_delete=models.CASCADE, null=True, blank=True)
     car = models.ForeignKey(Car, on_delete=models.CASCADE, verbose_name=_('Car'))
     description = models.TextField(blank=True, null=True, verbose_name=_('Description'))
     total = models.DecimalField(default=Decimal('0.00'), max_digits=10, decimal_places=2, verbose_name=_('Total'))

@@ -1,6 +1,7 @@
+from rest_framework.fields import SerializerMethodField
 from rest_framework.serializers import ModelSerializer
 
-from users.models import Employee
+from users.models import Employee, Client
 from .models import Order, OrderService, OrderProduct
 
 
@@ -21,9 +22,10 @@ class OrderPostSerializer(ModelSerializer):
 
     class Meta:
         model = Order
-        fields = ['car', 'description', 'total', 'paid', 'landing', 'odo_mileage', 'hev_mileage', 'ev_mileage',
+        fields = ['id', 'client', 'car', 'description', 'total', 'paid', 'landing', 'odo_mileage', 'hev_mileage', 'ev_mileage',
                   'branch', 'manager', 'created_at', 'services', 'products']
-        read_only_fields = ['created_at', 'branch']
+        read_only_fields = ['id', 'created_at', 'branch']
+
 
     def create(self, validated_data):
         services_data = validated_data.pop('services')
@@ -56,8 +58,9 @@ class OrderListSerializer(ModelSerializer):
 
     class Meta:
         model = Order
-        fields = ['id', 'car', 'description', 'total', 'paid', 'landing', 'odo_mileage', 'hev_mileage', 'ev_mileage',
+        fields = ['id', 'client', 'car', 'description', 'total', 'paid', 'landing', 'odo_mileage', 'hev_mileage', 'ev_mileage',
                   'branch', 'manager', 'created_at', 'services', 'products']
-        read_only_fields = ['branch', 'created_at']
+        read_only_fields = ['client', 'branch', 'created_at']
 
-
+    def get_client(self, obj):
+        return Client.objects.get(id=obj.car.client.id)

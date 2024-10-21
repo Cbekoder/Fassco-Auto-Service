@@ -33,11 +33,12 @@ class ProductRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
         return self.queryset.none()
 
 class ServiceListCreateView(ListCreateAPIView):
+    queryset = Service.objects.all()
     serializer_class = ServiceSerializer
     permission_classes = [IsAuthenticated, IsSameBranch]
 
     def get_queryset(self):
-        return self.queryset.filter(branch=self.request.user.branch).order_by('-created_at')
+        return self.queryset.filter(branch=self.request.user.branch).order_by('-id')
 
     def perform_create(self, serializer):
         serializer.save(branch=self.request.user.branch)
