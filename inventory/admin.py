@@ -18,7 +18,7 @@ class ServiceAdmin(admin.ModelAdmin):
 
 @admin.register(Car)
 class CarAdmin(admin.ModelAdmin):
-    list_display = ('name', 'brand', 'color', 'state_number', 'is_sold', 'odo_mileage', 'hev_mileage', 'ev_mileage', 'client', 'branch', 'created_at')
+    list_display = ('name', 'brand', 'color', 'vin_code', 'state_number', 'is_sold', 'odo_mileage', 'hev_mileage', 'ev_mileage', 'client', 'branch', 'created_at')
     search_fields = ('name', 'brand', 'state_number', 'client__first_name')  # Enable search by name, brand, state number, and client name
     list_filter = ('is_sold', 'branch', 'created_at')  # Filter by sold status, branch, and creation date
     ordering = ('-created_at',)  # Order by newest first

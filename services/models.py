@@ -29,7 +29,7 @@ class Order(models.Model):
         verbose_name_plural = _('Orders')
 
     def __str__(self):
-        return self.description
+        return self.description if self.description else self.pk
 
     def save(self, *args, **kwargs):
         with transaction.atomic():

@@ -14,7 +14,7 @@ class OrderAdmin(admin.ModelAdmin):
     list_display = ('car', 'description', 'total', 'paid', 'landing', 'odo_mileage', 'hev_mileage', 'ev_mileage', 'branch', 'created_at')
     search_fields = ('car__name', 'description', 'branch__name')
     list_filter = ('branch', 'created_at')
-    ordering = ('-created_at',)  # Order by newest first
+    ordering = ('-created_at',)
     inlines = [OrderProductInline, OrderServiceInline]
 
 

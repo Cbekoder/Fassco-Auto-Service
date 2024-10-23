@@ -28,27 +28,27 @@ class Debt(models.Model):
 
     def save(self, *args, **kwargs):
         with transaction.atomic():
+            wallet = Wallet.objects.last()
             if self.pk:
                 old_instance = Debt.objects.get(pk=self.pk)
                 if self.is_debt:
-                    self.supplier.debt += old_instance.debt_amount
-                else:
-                    self.branch.balance -= old_instance.debt_amount
                     self.supplier.debt -= old_instance.debt_amount
+                    wallet -= old_instance.debt_amount
+                else:
+                    self.supplier.debt += old_instance.debt_amount
+                    wallet += old_instance.debt_amount
 
             super().save(*args, **kwargs)
 
             if self.is_debt:
                 self.supplier.debt += self.debt_amount
+                wallet += self.debt_amount
             else:
                 if self.supplier.debt < self.debt_amount:
                     raise ValidationError({'detail':'Paying debt amount is greater than branch debt from supplier'})
-                if self.branch.balance < self.debt_amount:
-                    raise ValidationError({'detail':'Not enough balance to pay debt amount'})
-                self.branch.balance -= self.debt_amount
+                wallet -= self.debt_amount
                 self.supplier.debt -= self.debt_amount
             self.supplier.save()
-            self.branch.save()
 
 
 
@@ -71,14 +71,16 @@ class ImportList(models.Model):
 
     def save(self, *args, **kwargs):
         with transaction.atomic():
+            wallet = Wallet.objects.last()
             if self.pk:
                 old_instance = ImportList.objects.get(pk=self.pk)
-                old_debt = old_instance.debt
-                self.supplier.debt -= old_debt
-            self.debt = self.total - self.paid
+                self.supplier.debt -= old_instance.debt
+                wallet += old_instance.paid
+
             super().save(*args, **kwargs)
 
             self.supplier.debt += self.debt
+            wallet -= self.paid
             self.supplier.save()
 
     # def delete(self, *args, **kwargs):
@@ -111,8 +113,9 @@ class ImportProduct(models.Model):
                 old_amount = old_instance.amount
                 self.product.amount -= old_amount
                 self.import_list.total -= old_total_summ
-
-            if self.product.arrival_price != self.buy_price:
+            if not self.buy_price:
+                self.buy_price = self.product.arrival_price
+            elif self.product.arrival_price != self.buy_price:
                 existint_product = Product.objects.filter(
                     name=self.product.name,
                     branch=self.product.branch,

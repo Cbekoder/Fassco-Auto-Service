@@ -1,7 +1,7 @@
 from decimal import Decimal
 from rest_framework.exceptions import ValidationError
 from rest_framework.fields import SerializerMethodField
-from rest_framework.serializers import ModelSerializer
+from rest_framework.serializers import ModelSerializer, DecimalField
 from inventory.serializers import ProductImportDetailSerializer
 from .models import ExpenseType, Expense, Salary, ImportList, ImportProduct, Debt, BranchFundTransfer, Lending
 
@@ -32,6 +32,8 @@ class ImportProductSerializer(ModelSerializer):
         fields = ['id', 'product', 'amount', 'buy_price', 'total_summ']
         read_only_fields = ['total_summ']
 
+    buy_price = DecimalField(max_digits=10, decimal_places=2, required=False)
+
     def get_total_summ(self, obj):
         return Decimal(obj.amount) * obj.buy_price
 
@@ -41,7 +43,7 @@ class ImportListSerializer(ModelSerializer):
     class Meta:
         model = ImportList
         fields = ['id', 'total', 'paid', 'debt', 'supplier', 'description', 'created_at', 'branch', 'products']
-        read_only_fields = ['created_at', 'branch']
+        read_only_fields = ['total', 'debt', 'created_at', 'branch']
 
     def create(self, validated_data):
         products_data = validated_data.pop('products')
