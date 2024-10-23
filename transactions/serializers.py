@@ -40,8 +40,8 @@ class ImportListSerializer(ModelSerializer):
 
     class Meta:
         model = ImportList
-        fields = ['id', 'total', 'paid', 'debt', 'supplier', 'description', 'branch', 'products']
-        read_only_fields = ['branch']
+        fields = ['id', 'total', 'paid', 'debt', 'supplier', 'description', 'created_at', 'branch', 'products']
+        read_only_fields = ['created_at', 'branch']
 
 
     def create(self, validated_data):
@@ -63,7 +63,7 @@ class GetImportListSerializer(ModelSerializer):
 
     class Meta:
         model = ImportList
-        fields = ['id', 'total', 'paid', 'debt', 'supplier', 'description', 'branch', 'products']
+        fields = ['id', 'total', 'paid', 'debt', 'supplier', 'description', 'created_at', 'branch', 'products']
 
 
 class BranchFundTransferSerializer(ModelSerializer):
