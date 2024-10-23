@@ -47,14 +47,13 @@ class ImportListSerializer(ModelSerializer):
 
     def create(self, validated_data):
         products_data = validated_data.pop('products')
-        import_list = ImportList.objects.create(**validated_data)
+        import_list = ImportList.objects.create(**validated_data, total=0, debt=0)
         products_list = []
-        total = 0
         for product_data in products_data:
             pro_cr = ImportProduct.objects.create(import_list=import_list, **product_data)
-            total += pro_cr.total_summ
             products_list.append(pro_cr)
-        import_list.total = total
+
+        import_list.debt = import_list.total - import_list.paid
         import_list.save()
         import_list.products = products_list
         return import_list

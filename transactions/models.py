@@ -75,12 +75,14 @@ class ImportList(models.Model):
             if self.pk:
                 old_instance = ImportList.objects.get(pk=self.pk)
                 self.supplier.debt -= old_instance.debt
-                wallet += old_instance.paid
+                wallet.balance += old_instance.paid
 
             super().save(*args, **kwargs)
 
             self.supplier.debt += self.debt
-            wallet -= self.paid
+            wallet.balance -= self.paid
+
+            wallet.save()
             self.supplier.save()
 
     # def delete(self, *args, **kwargs):
@@ -115,7 +117,7 @@ class ImportProduct(models.Model):
                 self.import_list.total -= old_total_summ
             if not self.buy_price:
                 self.buy_price = self.product.arrival_price
-            elif self.product.arrival_price != self.buy_price:
+            elif self.buy_price != self.product.arrival_price:
                 existint_product = Product.objects.filter(
                     name=self.product.name,
                     branch=self.product.branch,
