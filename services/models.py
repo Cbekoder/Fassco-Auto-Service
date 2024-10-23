@@ -72,7 +72,7 @@ class OrderService(models.Model):
         verbose_name_plural = _('Order services')
 
     def __str__(self):
-        return f'{self.order.description} - {self.service.name}'
+        return f'{self.order.id} - {self.service.name}'
 
     def save(self, *args, **kwargs):
         with transaction.atomic():
@@ -100,7 +100,7 @@ class OrderProduct(models.Model):
         verbose_name_plural = _('Order products')
 
     def __str__(self):
-        return f'{self.order.description} - {self.product.name}'
+        return f'{self.order.id} - {self.product.name}'
 
     def save(self, *args, **kwargs):
         with transaction.atomic():
