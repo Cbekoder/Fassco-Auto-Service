@@ -12,9 +12,9 @@ from users.models import User, Employee, Supplier, Client
 
 class Debt(models.Model):
     supplier = models.ForeignKey(Supplier, on_delete=models.CASCADE, verbose_name=_('Supplier'), related_name='from_supplier')
-    debt_amount = models.DecimalField(max_digits=15, decimal_places=2, verbose_name=_('Debt amount'))
+    debt_amount = models.DecimalField(max_digits=15, decimal_places=0, verbose_name=_('Debt amount'))
     is_debt = models.BooleanField(default=False, verbose_name=_('Is debt'))
-    current_debt = models.DecimalField(max_digits=15, decimal_places=2, verbose_name=_('Current debt'))
+    current_debt = models.DecimalField(max_digits=15, decimal_places=0, verbose_name=_('Current debt'))
 
     created_at = models.DateTimeField(auto_now_add=True, verbose_name=_('Created at'))
     branch = models.ForeignKey(Branch, on_delete=models.CASCADE, verbose_name=_('Branch'))
@@ -53,9 +53,9 @@ class Debt(models.Model):
 
 
 class ImportList(models.Model):
-    total = models.DecimalField(max_digits=15, decimal_places=2, verbose_name=_('Total'))
-    paid = models.DecimalField(max_digits=15, decimal_places=2, verbose_name=_('Paid'))
-    debt = models.DecimalField(max_digits=15, decimal_places=2, verbose_name=_('Debt'))
+    total = models.DecimalField(max_digits=15, decimal_places=0, verbose_name=_('Total'))
+    paid = models.DecimalField(max_digits=15, decimal_places=0, verbose_name=_('Paid'))
+    debt = models.DecimalField(max_digits=15, decimal_places=0, verbose_name=_('Debt'))
     supplier = models.ForeignKey(Supplier, on_delete=models.CASCADE, verbose_name=_('Supplier'))
     description = models.TextField(null=True, blank=True, verbose_name=_('Description'))
 
@@ -92,8 +92,8 @@ class ImportList(models.Model):
 class ImportProduct(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE, verbose_name=_('Product'))
     amount = models.FloatField(default=1, verbose_name=_('Debt'))
-    buy_price = models.DecimalField(max_digits=15, decimal_places=2,verbose_name=_('Buy price'))
-    total_summ = models.DecimalField(max_digits=15, decimal_places=2, verbose_name=_('Total summ'))
+    buy_price = models.DecimalField(max_digits=15, decimal_places=0,verbose_name=_('Buy price'))
+    total_summ = models.DecimalField(max_digits=15, decimal_places=0, verbose_name=_('Total summ'))
     import_list = models.ForeignKey(ImportList, on_delete=models.CASCADE, verbose_name=_('Import list'))
 
     class Meta:
@@ -147,7 +147,7 @@ class ImportProduct(models.Model):
 
 class BranchFundTransfer(models.Model):
     description = models.CharField(max_length=255)
-    amount = models.DecimalField(max_digits=15, decimal_places=2, verbose_name=_('Daily fund amount'))
+    amount = models.DecimalField(max_digits=15, decimal_places=0, verbose_name=_('Daily fund amount'))
     user = models.ForeignKey(User, on_delete=models.CASCADE)
 
     branch = models.ForeignKey(Branch, on_delete=models.SET_NULL, null=True)
@@ -177,7 +177,7 @@ class ExpenseType(models.Model):
 class Expense(models.Model):
     description = models.TextField(verbose_name=_('Description'))
     type = models.ForeignKey(ExpenseType, on_delete=models.CASCADE, verbose_name=_('Type'))
-    amount = models.DecimalField(max_digits=15, decimal_places=2, verbose_name=_('Amount'))
+    amount = models.DecimalField(max_digits=15, decimal_places=0, verbose_name=_('Amount'))
     from_user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name=_('User'))
 
     created_at = models.DateTimeField(auto_now_add=True, verbose_name=_('Created at'))
@@ -207,7 +207,7 @@ class Expense(models.Model):
 class Salary(models.Model):
     employee = models.ForeignKey(Employee, on_delete=models.CASCADE, verbose_name=_('Employee'), related_name='for_employee')
     description = models.TextField(null=True, blank=True, verbose_name=_('Description'))
-    amount = models.DecimalField(max_digits=15, decimal_places=2, verbose_name=_('Amount'))
+    amount = models.DecimalField(max_digits=15, decimal_places=0, verbose_name=_('Amount'))
     from_user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name=_('User'))
 
     created_at = models.DateTimeField(auto_now_add=True, verbose_name=_('Created at'))
@@ -241,9 +241,9 @@ class Salary(models.Model):
 
 class Lending(models.Model):
     client = models.ForeignKey(Client, on_delete=models.CASCADE, verbose_name=_('Client'), related_name="from_client")
-    lending_amount = models.DecimalField(max_digits=15, decimal_places=2, verbose_name=_('Lending amount'))
+    lending_amount = models.DecimalField(max_digits=15, decimal_places=0, verbose_name=_('Lending amount'))
     is_lending = models.BooleanField(default=False, verbose_name=_('Is lending'))
-    current_lending = models.DecimalField(max_digits=15, decimal_places=2, verbose_name=_('Current lending'))
+    current_lending = models.DecimalField(max_digits=15, decimal_places=0, verbose_name=_('Current lending'))
 
     created_at = models.DateTimeField(auto_now_add=True, verbose_name=_('Created at'))
     branch = models.ForeignKey(Branch, on_delete=models.CASCADE, verbose_name=_('Branch'))

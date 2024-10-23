@@ -43,7 +43,6 @@ class ImportListSerializer(ModelSerializer):
         fields = ['id', 'total', 'paid', 'debt', 'supplier', 'description', 'created_at', 'branch', 'products']
         read_only_fields = ['created_at', 'branch']
 
-
     def create(self, validated_data):
         products_data = validated_data.pop('products')
         import_list = ImportList.objects.create(**validated_data)
@@ -81,7 +80,6 @@ class GivePayLendingSerializer(ModelSerializer):
     class Meta:
         model = Lending
         fields = ['client', 'lending_amount']
-
 
 
 class LendingListSerializer(ModelSerializer):

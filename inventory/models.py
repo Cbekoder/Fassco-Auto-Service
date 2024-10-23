@@ -12,8 +12,8 @@ class Product(models.Model):
     name = models.CharField(max_length=255, verbose_name=_('Name'))
     amount = models.FloatField(default=0, validators=[MinValueValidator(0)],  verbose_name=_('Amount'))
     unit = models.CharField(max_length=50, blank=True, null=True, verbose_name=_('Unit'))
-    arrival_price = models.DecimalField(max_digits=15, decimal_places=2, verbose_name=_('Import price'))
-    sell_price = models.DecimalField(max_digits=15, decimal_places=2, verbose_name=_('Export price'))
+    arrival_price = models.DecimalField(max_digits=15, decimal_places=0, verbose_name=_('Import price'))
+    sell_price = models.DecimalField(max_digits=15, decimal_places=0, verbose_name=_('Export price'))
     min_amount = models.FloatField(default=0, verbose_name=_('Min amount'))
     max_discount = models.PositiveIntegerField(default=0, validators=[MinValueValidator(0), MaxValueValidator(100)], verbose_name=_('Max discount'))
 
@@ -33,7 +33,7 @@ class Product(models.Model):
 
 class Service(models.Model):
     name = models.CharField(max_length=50, verbose_name=_('Name'))
-    price = models.DecimalField(max_digits=15, decimal_places=2, verbose_name=_('Price'))
+    price = models.DecimalField(max_digits=15, decimal_places=0, verbose_name=_('Price'))
 
     branch = models.ForeignKey(Branch, on_delete=models.CASCADE, verbose_name=_('Branch'))
 
@@ -50,6 +50,7 @@ class Car(models.Model):
     brand = models.CharField(max_length=255, verbose_name=_('Brand'))
     color = models.CharField(max_length=20, verbose_name=_('Color'))
     state_number = models.CharField(max_length=10, blank=True, null=True, verbose_name=_('State number'))
+    vin_code = models.CharField(max_length=30, blank=True, null=True, verbose_name=_('VIN code'))
     is_sold = models.BooleanField(default=False, verbose_name=_('Is sold'))
 
     odo_mileage = models.FloatField(default=0, validators=[MinValueValidator(0)], verbose_name=_('ODO mileage'))
