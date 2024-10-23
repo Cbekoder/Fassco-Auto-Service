@@ -50,7 +50,7 @@ class Car(models.Model):
     brand = models.CharField(max_length=255, verbose_name=_('Brand'))
     color = models.CharField(max_length=20, verbose_name=_('Color'))
     state_number = models.CharField(max_length=10, blank=True, null=True, verbose_name=_('State number'))
-    vin_code = models.CharField(max_length=30, blank=True, null=True, verbose_name=_('VIN code'))
+    vin_code = models.CharField(max_length=30, blank=True, null=True, unique=True, verbose_name=_('VIN code'))
     is_sold = models.BooleanField(default=False, verbose_name=_('Is sold'))
 
     odo_mileage = models.FloatField(default=0, validators=[MinValueValidator(0)], verbose_name=_('ODO mileage'))
