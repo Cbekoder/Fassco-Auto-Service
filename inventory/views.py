@@ -51,7 +51,7 @@ class ServiceRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
 
     def get_queryset(self):
         if self.request.user.is_authenticated:
-            return self.queryset.filter(branch=self.request.user.branch).order_by('-created_at')
+            return self.queryset.filter(branch=self.request.user.branch)
         return self.queryset.none()
 
 class CarListCreateView(ListCreateAPIView):
