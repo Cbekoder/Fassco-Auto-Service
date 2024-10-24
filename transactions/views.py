@@ -47,10 +47,6 @@ class PayDebtCreateView(CreateAPIView):
         debt_amount = serializer.validated_data.get('debt_amount', 0)
         supplier = serializer.validated_data.get('supplier')
         current_debt = supplier.debt - debt_amount
-        if branch.balance < debt_amount:
-            raise ValidationError({'detail':"Paid amount cannot be greater than branch balance"})
-        if debt_amount > supplier.debt:
-            raise ValidationError({'detail':"Debt amount cannot be greater than supplier debt"})
         serializer.save(
             branch=branch,
             is_debt=False,

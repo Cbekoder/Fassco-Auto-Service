@@ -8,7 +8,7 @@ from .serializers import OrderPostSerializer, OrderListSerializer
 class OrderListCreateView(ListCreateAPIView):
     queryset = Order.objects.all()
     permission_classes = (IsAuthenticated,)
-    serializer_class = OrderListSerializer
+    serializer_class = OrderPostSerializer
 
     def get_queryset(self):
         if self.request.user.is_authenticated:

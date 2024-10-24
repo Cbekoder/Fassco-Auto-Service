@@ -11,9 +11,9 @@ class Order(models.Model):
     client = models.ForeignKey(Client, on_delete=models.CASCADE, null=True, blank=True)
     car = models.ForeignKey(Car, on_delete=models.CASCADE, verbose_name=_('Car'))
     description = models.TextField(blank=True, null=True, verbose_name=_('Description'))
-    total = models.DecimalField(default=Decimal('0.00'), max_digits=10, decimal_places=2, verbose_name=_('Total'))
-    paid = models.DecimalField(default=Decimal('0.00'), max_digits=10, decimal_places=2, verbose_name=_('Paid'))
-    landing = models.DecimalField(default=Decimal('0.00'), max_digits=10, decimal_places=2, verbose_name=_('Debt'))
+    total = models.DecimalField(max_digits=15, decimal_places=0, verbose_name=_('Total'))
+    paid = models.DecimalField(max_digits=15, decimal_places=0, verbose_name=_('Paid'))
+    landing = models.DecimalField(max_digits=15, decimal_places=0, verbose_name=_('Debt'))
 
     odo_mileage = models.FloatField(blank=True, null=True, verbose_name=_('ODO mileage'))
     hev_mileage = models.FloatField(blank=True, null=True, verbose_name=_('HEV mileage'))
@@ -29,7 +29,7 @@ class Order(models.Model):
         verbose_name_plural = _('Orders')
 
     def __str__(self):
-        return self.description if self.description else self.pk
+        return self.description if self.description else f"{self.pk}"
 
     def save(self, *args, **kwargs):
         with transaction.atomic():
@@ -56,12 +56,17 @@ class Order(models.Model):
                 self.car.ev_mileage = self.ev_mileage
                 self.car.save()
 
+ORDER_TYPES = (
+    ('%', "Percentage"),
+    ('$', "Money"),
+)
 
 class OrderService(models.Model):
     order = models.ForeignKey(Order, on_delete=models.CASCADE)
     service = models.ForeignKey(Service, on_delete=models.CASCADE)
-    total = models.DecimalField(default=Decimal('0.00'), max_digits=10, decimal_places=2, verbose_name=_('Total'))
-    discount = models.DecimalField(default=Decimal('0.00'), max_digits=10, decimal_places=2,
+    total = models.DecimalField(max_digits=15, decimal_places=0, verbose_name=_('Total'))
+    discount_type = models.CharField(max_length=20, choices=ORDER_TYPES, default="%", verbose_name=_('Discount type'))
+    discount = models.DecimalField(max_digits=15, decimal_places=0,
                                    verbose_name=_('Discount'))
     description = models.TextField(blank=True, null=True, verbose_name=_('Description'))
     part = models.FloatField(blank=True, null=True, verbose_name=_('Part'))
@@ -90,8 +95,9 @@ class OrderProduct(models.Model):
     order = models.ForeignKey(Order, on_delete=models.CASCADE)
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     amount = models.FloatField(default=1, verbose_name=_('Amount'))
-    total = models.DecimalField(default=Decimal('0.00'), max_digits=10, decimal_places=2, verbose_name=_('Total'))
-    discount = models.DecimalField(default=Decimal('0.00'), max_digits=10, decimal_places=2,
+    total = models.DecimalField(max_digits=15, decimal_places=0, verbose_name=_('Total'))
+    discount_type = models.CharField(max_length=20, choices=ORDER_TYPES, default="%", verbose_name=_('Discount type'))
+    discount = models.DecimalField(max_digits=15, decimal_places=0,
                                    verbose_name=_('Discount'))
     description = models.TextField(blank=True, null=True, verbose_name=_('Description'))
 

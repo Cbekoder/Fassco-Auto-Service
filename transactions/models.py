@@ -42,11 +42,11 @@ class Debt(models.Model):
 
             if self.is_debt:
                 self.supplier.debt += self.debt_amount
-                wallet += self.debt_amount
+                wallet.balance += self.debt_amount
             else:
                 if self.supplier.debt < self.debt_amount:
                     raise ValidationError({'detail':'Paying debt amount is greater than branch debt from supplier'})
-                wallet -= self.debt_amount
+                wallet.balance -= self.debt_amount
                 self.supplier.debt -= self.debt_amount
             self.supplier.save()
 

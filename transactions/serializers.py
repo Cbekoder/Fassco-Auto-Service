@@ -1,4 +1,6 @@
 from decimal import Decimal
+
+from django.db import transaction
 from rest_framework.exceptions import ValidationError
 from rest_framework.fields import SerializerMethodField
 from rest_framework.serializers import ModelSerializer, DecimalField
@@ -46,17 +48,18 @@ class ImportListSerializer(ModelSerializer):
         read_only_fields = ['total', 'debt', 'created_at', 'branch']
 
     def create(self, validated_data):
-        products_data = validated_data.pop('products')
-        import_list = ImportList.objects.create(**validated_data, total=0, debt=0)
-        products_list = []
-        for product_data in products_data:
-            pro_cr = ImportProduct.objects.create(import_list=import_list, **product_data)
-            products_list.append(pro_cr)
+        with transaction.atomic():
+            products_data = validated_data.pop('products')
+            import_list = ImportList.objects.create(**validated_data, total=0, debt=0)
+            products_list = []
+            for product_data in products_data:
+                pro_cr = ImportProduct.objects.create(import_list=import_list, **product_data)
+                products_list.append(pro_cr)
 
-        import_list.debt = import_list.total - import_list.paid
-        import_list.save()
-        import_list.products = products_list
-        return import_list
+            import_list.debt = import_list.total - import_list.paid
+            import_list.save()
+            import_list.products = products_list
+            return import_list
 
 class GetImportListSerializer(ModelSerializer):
     products = ImportProductSerializer(source='importproduct_set', many=True,)
