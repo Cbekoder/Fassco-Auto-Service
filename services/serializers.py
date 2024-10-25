@@ -10,18 +10,20 @@ from .models import Order, OrderService, OrderProduct
 class OrderServiceSerializer(ModelSerializer):
     class Meta:
         model = OrderService
-        fields = ['id', 'service', 'total', 'part', 'discount', 'mechanic', 'description']
+        fields = ['id', 'service', 'total', 'part', 'discount_type', 'discount', 'mechanic', 'description']
 
     total = DecimalField(max_digits=15, decimal_places=0, required=False)
+    discount = DecimalField(max_digits=15, decimal_places=0, required=False)
 
 
 
 class OrderProductSerializer(ModelSerializer):
     class Meta:
         model = OrderProduct
-        fields = ['id', 'product', 'amount', 'total', 'discount', 'description']
+        fields = ['id', 'product', 'amount', 'total', 'discount_type', 'discount', 'description']
 
     total = DecimalField(max_digits=15, decimal_places=0, required=False)
+    discount = DecimalField(max_digits=15, decimal_places=0, required=False)
 
     def create(self, validated_data):
         with transaction.atomic():
@@ -56,9 +58,10 @@ class OrderPostSerializer(ModelSerializer):
 
             if isinstance(manager, int):
                 manager = Employee.objects.get(id=manager)
-            total =  0 if validated_data.get('total') is None else validated_data.get('total')
-            landing =  0 if validated_data.get('landing') is None else validated_data.get('landing')
-            order = Order.objects.create(**validated_data, branch=manager.branch, total=total, landing=landing)
+            validated_data['total'] =  0 if validated_data.get('total') is None else validated_data.get('total')
+            validated_data['landing'] =  0 if validated_data.get('landing') is None else validated_data.get('landing')
+
+            order = Order.objects.create(**validated_data, branch=manager.branch)
             total = 0
             service_responses = []
             product_responses = []

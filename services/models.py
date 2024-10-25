@@ -33,6 +33,8 @@ class Order(models.Model):
 
     def save(self, *args, **kwargs):
         with transaction.atomic():
+            if self.manager.position != "manager":
+                raise ValidationError(f"Employee isn't manager")
             if self.pk:
                 old_instance = Order.objects.get(pk=self.pk)
                 self.car.client.lending -= old_instance.landing
@@ -49,12 +51,18 @@ class Order(models.Model):
             if self.odo_mileage:
                 self.car.odo_mileage = self.odo_mileage
                 self.car.save()
+            else:
+                self.odo_mileage = self.car.odo_mileage
             if self.hev_mileage:
                 self.car.hev_mileage = self.hev_mileage
                 self.car.save()
+            else:
+                self.hev_mileage = self.car.hev_mileage
             if self.ev_mileage:
                 self.car.ev_mileage = self.ev_mileage
                 self.car.save()
+            else:
+                self.ev_mileage = self.car.ev_mileage
 
 ORDER_TYPES = (
     ('%', "Percentage"),
@@ -66,8 +74,7 @@ class OrderService(models.Model):
     service = models.ForeignKey(Service, on_delete=models.CASCADE)
     total = models.DecimalField(max_digits=15, decimal_places=0, verbose_name=_('Total'))
     discount_type = models.CharField(max_length=20, choices=ORDER_TYPES, default="%", verbose_name=_('Discount type'))
-    discount = models.DecimalField(max_digits=15, decimal_places=0,
-                                   verbose_name=_('Discount'))
+    discount = models.DecimalField(default=0, max_digits=15, decimal_places=0, verbose_name=_('Discount'))
     description = models.TextField(blank=True, null=True, verbose_name=_('Description'))
     part = models.FloatField(blank=True, null=True, verbose_name=_('Part'))
     mechanic = models.ForeignKey(Employee, on_delete=models.SET_NULL, null=True, verbose_name=_('Master'))
@@ -97,8 +104,7 @@ class OrderProduct(models.Model):
     amount = models.FloatField(default=1, verbose_name=_('Amount'))
     total = models.DecimalField(max_digits=15, decimal_places=0, verbose_name=_('Total'))
     discount_type = models.CharField(max_length=20, choices=ORDER_TYPES, default="%", verbose_name=_('Discount type'))
-    discount = models.DecimalField(max_digits=15, decimal_places=0,
-                                   verbose_name=_('Discount'))
+    discount = models.DecimalField(default=0, max_digits=15, decimal_places=0,verbose_name=_('Discount'))
     description = models.TextField(blank=True, null=True, verbose_name=_('Description'))
 
     class Meta:
@@ -110,11 +116,11 @@ class OrderProduct(models.Model):
 
     def save(self, *args, **kwargs):
         with transaction.atomic():
+            manager = self.order.manager
             if self.pk:
                 old_instance = OrderProduct.objects.get(pk=self.pk)
                 self.product.amount += old_instance.amount
 
-                manager = self.order.manager
                 manager.balance -= (manager.commission_per / 100) * old_instance.amount * (
                             self.product.sell_price - self.product.sell_price)
 
@@ -123,8 +129,7 @@ class OrderProduct(models.Model):
 
             super().save(*args, **kwargs)
 
-            manager = self.order.manager
-            manager.balance += Decimal(manager.commission_per / 100) * Decimal(self.amount) * (self.product.sell_price - self.product.sell_price)
+            manager.balance += Decimal(manager.commission_per / 100) * Decimal(self.amount) * (self.product.sell_price - self.product.arrival_price)
             manager.save()
 
             if self.product.amount >= self.amount:
