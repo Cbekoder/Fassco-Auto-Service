@@ -11,6 +11,7 @@ class Order(models.Model):
     client = models.ForeignKey(Client, on_delete=models.CASCADE, null=True, blank=True)
     car = models.ForeignKey(Car, on_delete=models.CASCADE, verbose_name=_('Car'))
     description = models.TextField(blank=True, null=True, verbose_name=_('Description'))
+    overall_total = models.DecimalField(max_digits=15, decimal_places=0,  null=True)
     total = models.DecimalField(max_digits=15, decimal_places=0, verbose_name=_('Total'))
     paid = models.DecimalField(max_digits=15, decimal_places=0, verbose_name=_('Paid'))
     landing = models.DecimalField(max_digits=15, decimal_places=0, verbose_name=_('Debt'))
@@ -33,7 +34,8 @@ class Order(models.Model):
 
     def save(self, *args, **kwargs):
         with transaction.atomic():
-            if self.manager.position != "manager":
+            self.client = self.car.client
+            if self.manager and self.manager.position != "manager":
                 raise ValidationError(f"Employee isn't manager")
             if self.pk:
                 old_instance = Order.objects.get(pk=self.pk)
@@ -50,19 +52,27 @@ class Order(models.Model):
 
             if self.odo_mileage:
                 self.car.odo_mileage = self.odo_mileage
-                self.car.save()
             else:
                 self.odo_mileage = self.car.odo_mileage
             if self.hev_mileage:
                 self.car.hev_mileage = self.hev_mileage
-                self.car.save()
             else:
                 self.hev_mileage = self.car.hev_mileage
             if self.ev_mileage:
                 self.car.ev_mileage = self.ev_mileage
-                self.car.save()
             else:
                 self.ev_mileage = self.car.ev_mileage
+            self.car.save()
+
+    def delete(self, *args, **kwargs):
+        with transaction.atomic():
+            self.client.lending -= self.landing
+            self.client.save()
+
+            self.branch.balance -= self.paid
+            self.branch.save()
+
+            super(Order, self).delete(*args, **kwargs)
 
 ORDER_TYPES = (
     ('%', "Percentage"),
@@ -90,10 +100,48 @@ class OrderService(models.Model):
         with transaction.atomic():
             if self.pk:
                 old_instance = OrderService.objects.get(pk=self.pk)
+
                 self.mechanic.balance -= self.mechanic.kpi * old_instance.part
+
+                if old_instance.discount_type == "%":
+                    self.order.total -= old_instance.service.price * old_instance.part * (old_instance.discount / 100)
+                elif old_instance.discount_type == "$":
+                    self.order.total -= old_instance.service.price * old_instance.part - old_instance.discount
+                self.order.overall_total -= old_instance.service.price
+
+            self.total = self.service.price * Decimal(self.part)
+            if self.discount_type == "%":
+                if 0 < self.discount < 100:
+                    self.total *= self.discount / 100
+                elif self.discount > 100:
+                    raise ValidationError({'detail': 'If dicount_type is %, Discount must be between 0 and 100'})
+            if self.discount_type == "$":
+                if 1000 < self.discount < self.service.price / 2:
+                    self.total -= self.discount
+                else:
+                    raise ValidationError({'detail': 'If discount_type is $, Discount must be between 1000 and service.price'})
+
             super().save(*args, **kwargs)
+
             self.mechanic.balance += self.mechanic.kpi * Decimal(self.part)
+
+            self.order.total += self.total
+            self.order.overall_total += self.service.price * Decimal(self.part)
+            self.order.save()
+
             self.mechanic.save()
+
+    def delete(self, *args, **kwargs):
+        with transaction.atomic():
+            self.mechanic.balance -= self.mechanic.kpi * Decimal(self.part)
+            self.mechanic.save()
+
+            if self.order:
+                self.order.total -= self.total
+                self.order.overall_total -= self.service.price * Decimal(self.part)
+                self.order.save()
+
+            super(OrderService, self).delete(*args, **kwargs)
             
 
 
@@ -103,7 +151,7 @@ class OrderProduct(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     amount = models.FloatField(default=1, verbose_name=_('Amount'))
     total = models.DecimalField(max_digits=15, decimal_places=0, verbose_name=_('Total'))
-    discount_type = models.CharField(max_length=20, choices=ORDER_TYPES, default="%", verbose_name=_('Discount type'))
+    discount_type = models.CharField(max_length=1, choices=ORDER_TYPES, default="%", verbose_name=_('Discount type'))
     discount = models.DecimalField(default=0, max_digits=15, decimal_places=0,verbose_name=_('Discount'))
     description = models.TextField(blank=True, null=True, verbose_name=_('Description'))
 
@@ -119,10 +167,24 @@ class OrderProduct(models.Model):
             manager = self.order.manager
             if self.pk:
                 old_instance = OrderProduct.objects.get(pk=self.pk)
+
                 self.product.amount += old_instance.amount
+
+                if old_instance.discount_type == "%" and old_instance.discount <= old_instance.product.max_discount:
+                    self.order.total -= old_instance.amount * old_instance.product.sell_price * (old_instance.discount / 100)
+                elif old_instance.discount_type == "$" and old_instance.discount <= old_instance.product.sell_price * old_instance.product.max_discount / 100:
+                    self.order.total -= old_instance.amount * old_instance.product.sell_price - old_instance.discount
+                self.order.overall_total -= old_instance.amount * old_instance.product.sell_price
 
                 manager.balance -= (manager.commission_per / 100) * old_instance.amount * (
                             self.product.sell_price - self.product.sell_price)
+
+            if self.discount_type == "%" and self.discount <= self.product.max_discount:
+                self.total = Decimal(self.amount) * self.product.sell_price * (self.discount / 100)
+            elif self.discount_type == "$" and self.discount <= self.product.sell_price * self.product.max_discount / 100:
+                self.total = Decimal(self.amount) * self.product.sell_price - self.discount
+            else:
+                raise ValidationError({"detail": "problem in discount"})
 
             if self.total != Decimal(self.amount) * self.product.sell_price:
                 self.total = Decimal(self.amount) * self.product.sell_price
@@ -132,9 +194,30 @@ class OrderProduct(models.Model):
             manager.balance += Decimal(manager.commission_per / 100) * Decimal(self.amount) * (self.product.sell_price - self.product.arrival_price)
             manager.save()
 
+            self.order.total += self.total
+            self.order.overall_total += Decimal(self.amount) * self.product.sell_price
+            self.order.save()
+
             if self.product.amount >= self.amount:
                 self.product.amount -= self.amount
                 self.product.save()
             else:
                 raise ValidationError(
                     f"Not enough product stock. Available: {self.product.amount}, requested: {self.amount}.")
+
+    def delete(self, *args, **kwargs):
+        with transaction.atomic():
+            self.product.amount += self.amount
+            self.product.save()
+
+            manager = self.order.manager
+            manager.balance -= Decimal(manager.commission_per / 100) * Decimal(self.amount) * (
+                    self.product.sell_price - self.product.arrival_price)
+            manager.save()
+
+            if self.order:
+                self.order.total -= self.total
+                self.order.overall_total -= Decimal(self.amount) * self.product.sell_price
+                self.order.save()
+
+            super(OrderProduct, self).delete(*args, **kwargs)

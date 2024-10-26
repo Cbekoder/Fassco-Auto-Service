@@ -34,7 +34,7 @@ class UserAdmin(UserAdmin):
 
 @register(Employee)
 class EmployeeAdmin(ModelAdmin):
-    list_display = ('first_name', 'last_name', 'position', 'branch', 'commission_per', 'salary', 'kpi')
+    list_display = ('first_name', 'last_name', 'balance', 'position', 'branch', 'commission_per', 'salary', 'kpi')
     search_fields = ('first_name', 'last_name', 'branch__name', 'position')
     list_filter = ('branch', 'position')
 
@@ -48,7 +48,7 @@ class SupplierAdmin(ModelAdmin):
 
 @register(Client)
 class ClientAdmin(ModelAdmin):
-    list_display = ('first_name', 'last_name', 'phone', 'extra_phone', 'branch')
+    list_display = ('first_name', 'last_name', 'lending', 'phone', 'extra_phone', 'branch')
     search_fields = ('first_name', 'last_name', 'phone', 'extra_phone', 'branch__name')
     list_filter = ('branch',)
 

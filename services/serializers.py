@@ -1,8 +1,9 @@
 from django.db import transaction
+from rest_framework.exceptions import ValidationError
 from rest_framework.fields import SerializerMethodField
-from rest_framework.serializers import ModelSerializer, DecimalField
+from rest_framework.serializers import ModelSerializer, DecimalField, PrimaryKeyRelatedField
 
-from inventory.models import Product
+from inventory.models import Product, Car
 from users.models import Employee, Client
 from .models import Order, OrderService, OrderProduct
 
@@ -41,12 +42,13 @@ class OrderPostSerializer(ModelSerializer):
 
     class Meta:
         model = Order
-        fields = ['id', 'client', 'car', 'description', 'total', 'paid', 'landing', 'odo_mileage', 'hev_mileage', 'ev_mileage',
+        fields = ['id', 'client', 'car', 'description', 'overall_total', 'total', 'paid', 'landing', 'odo_mileage', 'hev_mileage', 'ev_mileage',
                   'branch', 'manager', 'created_at', 'services', 'products']
-        read_only_fields = ['id', 'created_at', 'branch']
+        read_only_fields = ['id', 'created_at', 'branch', 'overall_total']
 
     total = DecimalField(max_digits=15, decimal_places=0, required=False)
     landing = DecimalField(max_digits=15, decimal_places=0, required=False)
+    manager = PrimaryKeyRelatedField(queryset=Employee.objects.filter(position='manager'), required=False)
 
 
     def create(self, validated_data):
@@ -54,31 +56,30 @@ class OrderPostSerializer(ModelSerializer):
             services_data = validated_data.pop('services')
             products_data = validated_data.pop('products')
 
-            manager = validated_data.get('car')
+            if products_data and not validated_data['manager']:
+                raise ValidationError({'detail': "If product is exist, Manager is required"})
 
-            if isinstance(manager, int):
-                manager = Employee.objects.get(id=manager)
+            car = validated_data.get('car')
+
+            if isinstance(car, int):
+                car = Car.objects.get(id=car)
             validated_data['total'] =  0 if validated_data.get('total') is None else validated_data.get('total')
             validated_data['landing'] =  0 if validated_data.get('landing') is None else validated_data.get('landing')
+            validated_data['overall_total'] = 0 if validated_data.get('overall_total') is None else validated_data.get('overall_total')
 
-            order = Order.objects.create(**validated_data, branch=manager.branch)
-            total = 0
+            order = Order.objects.create(**validated_data, branch=car.branch)
             service_responses = []
             product_responses = []
             for service_data in services_data:
                 service_i = OrderService.objects.create(order=order, **service_data)
-                total += service_i.total
                 service_responses.append(service_i)
 
             for product_data in products_data:
                 product_i = OrderProduct.objects.create(order=order, **product_data)
-                total += product_i.total
                 product_responses.append(product_i)
 
-            if order.total != total:
-                order.total = total
-                order.landing = total - order.paid
-                order.save()
+            order.landing = order.total - order.paid
+            order.save()
 
             order.services = service_responses
             order.products = product_responses
@@ -91,7 +92,7 @@ class OrderListSerializer(ModelSerializer):
 
     class Meta:
         model = Order
-        fields = ['id', 'client', 'car', 'description', 'total', 'paid', 'landing', 'odo_mileage', 'hev_mileage', 'ev_mileage',
+        fields = ['id', 'client', 'car', 'description', 'overall_total', 'total', 'paid', 'landing', 'odo_mileage', 'hev_mileage', 'ev_mileage',
                   'branch', 'manager', 'created_at', 'services', 'products']
         read_only_fields = ['client', 'branch', 'created_at']
 

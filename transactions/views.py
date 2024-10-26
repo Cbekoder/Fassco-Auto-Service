@@ -213,11 +213,6 @@ class BranchFundTransferListCreateView(ListCreateAPIView):
             user=self.request.user,
             amount=branch.balance
         )
-        wallet = Wallet.objects.last()
-        wallet.balance += branch.balance
-        wallet.save()
-        branch.balance = 0
-        branch.save()
 
 
 class GiveLendingCreateView(CreateAPIView):

@@ -1,9 +1,11 @@
 from decimal import Decimal
+from inspect import walktree
 
 from django.core.validators import MinValueValidator
 from django.db import models, transaction
 from django.utils.translation import gettext_lazy as _
 from rest_framework.exceptions import ValidationError
+from rest_framework.fields import empty
 
 from branches.models import Branch, Wallet
 from inventory.models import Product
@@ -118,14 +120,14 @@ class ImportProduct(models.Model):
             if not self.buy_price:
                 self.buy_price = self.product.arrival_price
             elif self.buy_price != self.product.arrival_price:
-                existint_product = Product.objects.filter(
+                exist_product = Product.objects.filter(
                     name=self.product.name,
                     branch=self.product.branch,
                     supplier=self.product.supplier,
                     arrival_price=self.buy_price
                 )
-                if existint_product:
-                    self.product = existint_product.last()
+                if exist_product:
+                    self.product = exist_product.last()
                 else:
                     new_product = Product.objects.create(
                         name=self.product.name,
@@ -164,6 +166,18 @@ class BranchFundTransfer(models.Model):
 
     def __str__(self):
         return f'{self.branch.name} - {self.amount}'
+
+    def save(self, *args, **kwargs):
+        with transaction.atomic():
+            wallet = Wallet.objects.last()
+            if self.branch.balance >= 0:
+                wallet.balance += self.branch.balance
+                wallet.save()
+                self.branch.balance = 0
+                self.branch.save()
+            else:
+                raise ValidationError({"detail": "Branch fund is less than 0"})
+
 
 
 
@@ -208,6 +222,12 @@ class Expense(models.Model):
                 raise ValidationError({'detail': 'Not enough balance to spend expense amount'})
             self.branch.save()
 
+    def delete(self, *args, **kwargs):
+        with transaction.atomic():
+            self.branch.balance += self.amount
+            self.branch.save()
+            super(Lending, self).delete(*args, **kwargs)
+
 
 class Salary(models.Model):
     employee = models.ForeignKey(Employee, on_delete=models.CASCADE, verbose_name=_('Employee'), related_name='for_employee')
@@ -234,13 +254,34 @@ class Salary(models.Model):
                 wallet.balance += old_amount
                 self.employee.balance += old_amount
             super().save(*args, **kwargs)
-            if self.employee.balance >= self.amount:
+            if self.employee.position == "manager":
+                if self.employee.balance >= self.amount:
+                    wallet.balance -= self.amount
+                    self.employee.balance -= self.amount
+                else:
+                    raise ValidationError({'detail': 'Not enough balance to spend salary amount'})
+            elif self.employee.position == "other":
+                wallet.balance -= self.amount
+                self.employee.balance -= self.amount - self.employee.salary
+            elif self.employee.position == 'mechanic':
                 wallet.balance -= self.amount
                 self.employee.balance -= self.amount
-                self.employee.save()
-                wallet.save()
-            else:
-                raise ValidationError({'detail': 'Not enough balance to spend salary amount'})
+
+            self.employee.save()
+            wallet.save()
+
+    def delete(self, *args, **kwargs):
+        with transaction.atomic():
+            wallet = Wallet.objects.last()
+
+            self.employee.balance += self.amount
+            wallet.balance += self.amount
+
+            self.employee.save()
+            wallet.save()
+
+            super(Salary, self).delete(*args, **kwargs)
+
 
 
 
@@ -270,19 +311,35 @@ class Lending(models.Model):
                     self.client.lending -= old_amount
                 else:
                     self.client.lending += old_amount
-                    self.branch -= old_amount
+                    self.branch.balance -= old_amount
 
             super().save(*args, **kwargs)
 
             if self.is_lending:
                 self.client.lending += self.lending_amount
+                self.branch.balance -= self.lending_amount
             else:
                 if self.client.lending < self.lending_amount:
                     raise ValidationError({'detail': 'Lending amount is greater than client lending'})
                 self.client.lending -= self.lending_amount
-                self.branch += self.lending_amount
+                self.branch.balance += self.lending_amount
 
             self.branch.save()
             self.client.save()
+
+    def delete(self, *args, **kwargs):
+        with transaction.atomic():
+            if self.is_lending:
+                self.client.lending -= self.lending_amount
+                self.branch.balance += self.lending_amount
+            else:
+                self.client.lending += self.lending_amount
+                self.branch.balance -= self.lending_amount
+
+            self.branch.save()
+            self.client.save()
+
+            super(Lending, self).delete(*args, **kwargs)
+
 
 
