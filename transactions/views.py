@@ -1,4 +1,6 @@
 from drf_yasg import openapi
+from datetime import timedelta
+from django.utils import timezone
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status
 from rest_framework.exceptions import ValidationError
@@ -7,8 +9,10 @@ from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIV
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from django.db.models import Sum, Q, F
 
 from branches.models import Wallet
+from services.models import Order
 from users.permissions import IsStaffStatus
 from .models import ExpenseType, Expense, Salary, ImportList, ImportProduct, Debt, BranchFundTransfer, Lending
 from .serializers import (
@@ -326,6 +330,105 @@ class SalaryDetailView(RetrieveUpdateDestroyAPIView):
         if self.request.user.is_authenticated:
             return self.queryset.filter(branch=self.request.user.branch)
         return self.queryset.none()
+
+
+class DetailedBranchStatisticsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    @swagger_auto_schema(
+        manual_parameters=[
+            openapi.Parameter(
+                "duration",
+                openapi.IN_QUERY,
+                description="Duration for the report (daily, weekly, monthly)",
+                type=openapi.TYPE_STRING,
+                enum=["daily", "weekly", "monthly"],
+                default="daily"
+            )
+        ]
+    )
+    def get(self, request):
+        duration = request.query_params.get("duration", "daily")
+        if duration == "weekly":
+            start_date = timezone.now() - timedelta(weeks=1)
+        elif duration == "monthly":
+            start_date = timezone.now() - timedelta(days=30)
+        else:
+            start_date = timezone.now() - timedelta(days=1)
+
+        end_date = timezone.now()
+
+        orders = Order.objects.filter(branch=self.request.user.branch, created_at__range=[start_date, end_date])
+        order_income_details = orders.values("client__first_name").annotate(total_paid=Sum("paid"))
+        order_income_total = orders.aggregate(total=Sum("paid"))["total"] or 0
+
+        lendings = Lending.objects.filter(branch=self.request.user.branch, created_at__range=[start_date, end_date],
+                                          is_lending=True)
+        lending_income_details = lendings.values("client__first_name").annotate(total_lending=Sum("lending_amount"))
+        lending_income_total = lendings.aggregate(total=Sum("lending_amount"))["total"] or 0
+
+        incomes = {
+            "order_income": {
+                "total": order_income_total,
+                "details": list(order_income_details)
+            },
+            "client_lending_payments": {
+                "total": lending_income_total,
+                "details": list(lending_income_details)
+            },
+            "total_income": order_income_total + lending_income_total
+        }
+
+        # Detailed Outcome Destinations
+        import_expenses = ImportList.objects.filter(branch=self.request.user.branch, created_at__range=[start_date, end_date])
+        import_expense_details = import_expenses.values("supplier__first_name").annotate(total_paid=Sum("paid"))
+        import_outcome_total = import_expenses.aggregate(total=Sum("paid"))["total"] or 0
+
+        expenses = Expense.objects.filter(branch=self.request.user.branch, created_at__range=[start_date, end_date])
+        general_expense_details = expenses.values("type__name").annotate(total_amount=Sum("amount"))
+        general_expense_total = expenses.aggregate(total=Sum("amount"))["total"] or 0
+
+        salaries = Salary.objects.filter(branch=self.request.user.branch, created_at__range=[start_date, end_date])
+        salary_details = salaries.values("employee__first_name").annotate(total_amount=Sum("amount"))
+        salary_outcome_total = salaries.aggregate(total=Sum("amount"))["total"] or 0
+
+        debts = Debt.objects.filter(branch=self.request.user.branch, created_at__range=[start_date, end_date], is_debt=True)
+        debt_details = debts.values("supplier__first_name").annotate(total_debt=Sum("debt_amount"))
+        debt_outcome_total = debts.aggregate(total=Sum("debt_amount"))["total"] or 0
+
+        outcomes = {
+            "import_payments": {
+                "total": import_outcome_total,
+                "details": list(import_expense_details)
+            },
+            "general_expenses": {
+                "total": general_expense_total,
+                "details": list(general_expense_details)
+            },
+            "salaries": {
+                "total": salary_outcome_total,
+                "details": list(salary_details)
+            },
+            "supplier_debts": {
+                "total": debt_outcome_total,
+                "details": list(debt_details)
+            },
+            "total_outcome": import_outcome_total + general_expense_total + salary_outcome_total + debt_outcome_total
+        }
+
+        net_income = incomes["total_income"] - outcomes["total_outcome"]
+
+        data = {
+            "branch_id": self.request.user.branch.id,
+            "duration": duration.capitalize(),
+            "start_date": start_date,
+            "end_date": end_date,
+            "incomes": incomes,
+            "outcomes": outcomes,
+            "net_income": net_income
+        }
+
+        return Response(data)
 
 
 

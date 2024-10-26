@@ -3,7 +3,8 @@ from .views import (
     ExpenseTypeListCreateView, ExpenseTypeDetailView, ExpenseListCreateView, ExpenseDetailView,
     SalaryListCreateView, SalaryDetailView, ImportCreateView, DebtListView, DebtDetailView,
     BranchFundTransferListCreateView, GiveLendingCreateView, PayLendingCreateView, GetDebtCreateView,
-    PayDebtCreateView, ImportListAPIView, ImportListDetailAPIView, LendingListView, LendingDetailView
+    PayDebtCreateView, ImportListAPIView, ImportListDetailAPIView, LendingListView, LendingDetailView,
+    DetailedBranchStatisticsView
 )
 urlpatterns = [
     path('debt-get/', GetDebtCreateView.as_view(), name='get-debt'),
@@ -24,5 +25,6 @@ urlpatterns = [
     path('expense/<int:pk>/', ExpenseDetailView.as_view(), name='expense-detail'),
     path('salaries/', SalaryListCreateView.as_view(), name='salary-list-create'),
     path('salary/<int:pk>/', SalaryDetailView.as_view(), name='salary-detail'),
+    path('statistics/', DetailedBranchStatisticsView.as_view(), name='statistics'),
 ]
 

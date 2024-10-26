@@ -226,7 +226,7 @@ class Expense(models.Model):
         with transaction.atomic():
             self.branch.balance += self.amount
             self.branch.save()
-            super(Lending, self).delete(*args, **kwargs)
+            super(Expense, self).delete(*args, **kwargs)
 
 
 class Salary(models.Model):
