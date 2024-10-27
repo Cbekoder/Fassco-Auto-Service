@@ -179,12 +179,17 @@ class OrderProduct(models.Model):
                 manager.balance -= (manager.commission_per / 100) * old_instance.amount * (
                             self.product.sell_price - self.product.sell_price)
 
-            if self.discount_type == "%" and self.discount <= self.product.max_discount:
-                self.total = Decimal(self.amount) * self.product.sell_price * (self.discount / 100)
-            elif self.discount_type == "$" and self.discount <= self.product.sell_price * self.product.max_discount / 100:
-                self.total = Decimal(self.amount) * self.product.sell_price - self.discount
-            else:
-                raise ValidationError({"detail": "problem in discount"})
+            if self.discount_type == "%":
+                if self.discount <= self.product.max_discount:
+                    self.total = Decimal(self.amount) * self.product.sell_price * (self.discount / 100)
+                else:
+                    raise ValidationError({"detail": "problem in discount"})
+            elif self.discount_type == "$":
+                if self.discount <= self.product.sell_price * self.product.max_discount / 100:
+                    self.total = Decimal(self.amount) * self.product.sell_price - self.discount
+                else:
+                    raise ValidationError({"detail": "problem in discount"})
+
 
             if self.total != Decimal(self.amount) * self.product.sell_price:
                 self.total = Decimal(self.amount) * self.product.sell_price
