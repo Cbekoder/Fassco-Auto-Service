@@ -48,7 +48,7 @@ class OrderPostSerializer(ModelSerializer):
 
     total = DecimalField(max_digits=15, decimal_places=0, required=False)
     landing = DecimalField(max_digits=15, decimal_places=0, required=False)
-    manager = PrimaryKeyRelatedField(queryset=Employee.objects.filter(position='manager'), required=False)
+    manager = PrimaryKeyRelatedField(queryset=Employee.objects.filter(position='manager'), allow_null=True)
 
 
     def create(self, validated_data):

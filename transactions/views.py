@@ -335,51 +335,7 @@ class SalaryDetailView(RetrieveUpdateDestroyAPIView):
 class DetailedBranchStatisticsView(APIView):
     permission_classes = [IsAuthenticated]
 
-    # @swagger_auto_schema(
-    #     manual_parameters=[
-    #         openapi.Parameter(
-    #             "duration",
-    #             openapi.IN_QUERY,
-    #             description="Duration for the report (daily, weekly, monthly, custom)",
-    #             type=openapi.TYPE_STRING,
-    #             enum=["daily", "weekly", "monthly", "custom"],
-    #             default="daily"
-    #         ),
-    #         openapi.Parameter(
-    #             "start_date",
-    #             openapi.IN_QUERY,
-    #             description="Start date for the report in YYYY-MM-DD format (required if duration is custom)",
-    #             type=openapi.TYPE_STRING
-    #         ),
-    #         openapi.Parameter(
-    #             "end_date",
-    #             openapi.IN_QUERY,
-    #             description="End date for the report in YYYY-MM-DD format (required if duration is custom)",
-    #             type=openapi.TYPE_STRING
-    #         )
-    #     ]
-    # )
     def get(self, request, duration, start_date=None, end_date=None):
-        # duration = request.query_params.get("duration")
-        # start_date_str = request.query_params.get("start_date")
-        # end_date_str = request.query_params.get("end_date")
-        #
-        # if duration == "custom":
-        #     if not start_date_str or not end_date_str:
-        #         return Response({"error": "Both start_date and end_date are required when duration is 'custom'."}, status=400)
-        #     try:
-        #         start_date = timezone.make_aware(datetime.strptime(start_date_str, "%Y-%m-%d")).replace(hour=0, minute=0, second=0)
-        #         end_date = timezone.make_aware(datetime.strptime(end_date_str, "%Y-%m-%d")).replace(hour=23, minute=59, second=59)
-        #     except ValueError:
-        #         return Response({"error": "Invalid date format. Use YYYY-MM-DD."}, status=400)
-        # else:
-        #     if duration == "weekly":
-        #         start_date = timezone.now() - timedelta(weeks=1)
-        #     elif duration == "monthly":
-        #         start_date = timezone.now() - timedelta(days=30)
-        #     else:
-        #         start_date = timezone.now() - timedelta(days=1)
-        #     end_date = timezone.now()
         if duration == "custom":
             if not start_date or not end_date:
                 return Response({"error": "Both start_date and end_date are required when duration is 'custom'."},
@@ -392,12 +348,12 @@ class DetailedBranchStatisticsView(APIView):
             except ValueError:
                 return Response({"error": "Invalid date format. Use YYYY-MM-DD."}, status=400)
         else:
-            # Set date range for daily, weekly, or monthly
+
             if duration == "weekly":
                 start_date = timezone.now() - timedelta(weeks=1)
             elif duration == "monthly":
                 start_date = timezone.now() - timedelta(days=30)
-            else:  # Daily
+            else:
                 start_date = timezone.now() - timedelta(days=1)
             end_date = timezone.now()
 
