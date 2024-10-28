@@ -1,6 +1,6 @@
 from drf_yasg import openapi
-from datetime import timedelta
 from django.utils import timezone
+from datetime import datetime, timedelta
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status
 from rest_framework.exceptions import ValidationError
@@ -340,30 +340,52 @@ class DetailedBranchStatisticsView(APIView):
             openapi.Parameter(
                 "duration",
                 openapi.IN_QUERY,
-                description="Duration for the report (daily, weekly, monthly)",
+                description="Duration for the report (daily, weekly, monthly, custom)",
                 type=openapi.TYPE_STRING,
-                enum=["daily", "weekly", "monthly"],
+                enum=["daily", "weekly", "monthly", "custom"],
                 default="daily"
+            ),
+            openapi.Parameter(
+                "start_date",
+                openapi.IN_QUERY,
+                description="Start date for the report in YYYY-MM-DD format (required if duration is custom)",
+                type=openapi.TYPE_STRING
+            ),
+            openapi.Parameter(
+                "end_date",
+                openapi.IN_QUERY,
+                description="End date for the report in YYYY-MM-DD format (required if duration is custom)",
+                type=openapi.TYPE_STRING
             )
         ]
     )
     def get(self, request):
         duration = request.query_params.get("duration", "daily")
-        if duration == "weekly":
-            start_date = timezone.now() - timedelta(weeks=1)
-        elif duration == "monthly":
-            start_date = timezone.now() - timedelta(days=30)
-        else:
-            start_date = timezone.now() - timedelta(days=1)
+        start_date_str = request.query_params.get("start_date")
+        end_date_str = request.query_params.get("end_date")
 
-        end_date = timezone.now()
+        if duration == "custom":
+            if not start_date_str or not end_date_str:
+                return Response({"error": "Both start_date and end_date are required when duration is 'custom'."}, status=400)
+            try:
+                start_date = timezone.make_aware(datetime.strptime(start_date_str, "%Y-%m-%d")).replace(hour=0, minute=0, second=0)
+                end_date = timezone.make_aware(datetime.strptime(end_date_str, "%Y-%m-%d")).replace(hour=23, minute=59, second=59)
+            except ValueError:
+                return Response({"error": "Invalid date format. Use YYYY-MM-DD."}, status=400)
+        else:
+            if duration == "weekly":
+                start_date = timezone.now() - timedelta(weeks=1)
+            elif duration == "monthly":
+                start_date = timezone.now() - timedelta(days=30)
+            else:
+                start_date = timezone.now() - timedelta(days=1)
+            end_date = timezone.now()
 
         orders = Order.objects.filter(branch=self.request.user.branch, created_at__range=[start_date, end_date])
         order_income_details = orders.values("client__first_name").annotate(total_paid=Sum("paid"))
         order_income_total = orders.aggregate(total=Sum("paid"))["total"] or 0
 
-        lendings = Lending.objects.filter(branch=self.request.user.branch, created_at__range=[start_date, end_date],
-                                          is_lending=True)
+        lendings = Lending.objects.filter(branch=self.request.user.branch, created_at__range=[start_date, end_date], is_lending=True)
         lending_income_details = lendings.values("client__first_name").annotate(total_lending=Sum("lending_amount"))
         lending_income_total = lendings.aggregate(total=Sum("lending_amount"))["total"] or 0
 
@@ -379,7 +401,6 @@ class DetailedBranchStatisticsView(APIView):
             "total_income": order_income_total + lending_income_total
         }
 
-        # Detailed Outcome Destinations
         import_expenses = ImportList.objects.filter(branch=self.request.user.branch, created_at__range=[start_date, end_date])
         import_expense_details = import_expenses.values("supplier__first_name").annotate(total_paid=Sum("paid"))
         import_outcome_total = import_expenses.aggregate(total=Sum("paid"))["total"] or 0
@@ -429,6 +450,5 @@ class DetailedBranchStatisticsView(APIView):
         }
 
         return Response(data)
-
 
 
