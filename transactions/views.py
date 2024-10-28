@@ -441,7 +441,7 @@ class DetailedBranchStatisticsView(APIView):
 
         data = {
             "branch_id": self.request.user.branch.id,
-            "duration": duration.capitalize(),
+            "duration": duration,
             "start_date": start_date,
             "end_date": end_date,
             "incomes": incomes,
