@@ -385,7 +385,7 @@ class DetailedBranchStatisticsView(APIView):
         order_income_details = orders.values("client__first_name").annotate(total_paid=Sum("paid"))
         order_income_total = orders.aggregate(total=Sum("paid"))["total"] or 0
 
-        lendings = Lending.objects.filter(branch=self.request.user.branch, created_at__range=[start_date, end_date], is_lending=True)
+        lendings = Lending.objects.filter(branch=self.request.user.branch, created_at__range=[start_date, end_date], is_lending=False)
         lending_income_details = lendings.values("client__first_name").annotate(total_lending=Sum("lending_amount"))
         lending_income_total = lendings.aggregate(total=Sum("lending_amount"))["total"] or 0
 
