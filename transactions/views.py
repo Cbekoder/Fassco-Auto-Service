@@ -413,7 +413,7 @@ class DetailedBranchStatisticsView(APIView):
         salary_details = salaries.values("employee__first_name").annotate(total_amount=Sum("amount"))
         salary_outcome_total = salaries.aggregate(total=Sum("amount"))["total"] or 0
 
-        debts = Debt.objects.filter(branch=self.request.user.branch, created_at__range=[start_date, end_date], is_debt=True)
+        debts = Debt.objects.filter(branch=self.request.user.branch, created_at__range=[start_date, end_date], is_debt=False)
         debt_details = debts.values("supplier__first_name").annotate(total_debt=Sum("debt_amount"))
         debt_outcome_total = debts.aggregate(total=Sum("debt_amount"))["total"] or 0
 
