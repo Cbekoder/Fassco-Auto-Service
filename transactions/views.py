@@ -360,7 +360,7 @@ class DetailedBranchStatisticsView(APIView):
         ]
     )
     def get(self, request):
-        duration = request.query_params.get("duration", "daily")
+        duration = request.query_params.get("duration")
         start_date_str = request.query_params.get("start_date")
         end_date_str = request.query_params.get("end_date")
 
