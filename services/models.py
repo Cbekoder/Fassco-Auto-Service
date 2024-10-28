@@ -116,7 +116,7 @@ class OrderService(models.Model):
                 elif self.discount > 100:
                     raise ValidationError({'detail': 'If dicount_type is %, Discount must be between 0 and 100'})
             if self.discount_type == "$":
-                if 1000 < self.discount < self.service.price / 2:
+                if 1000 < self.discount < self.service.price:
                     self.total -= self.discount
                 else:
                     raise ValidationError({'detail': 'If discount_type is $, Discount must be between 1000 and service.price'})
@@ -180,12 +180,12 @@ class OrderProduct(models.Model):
                             self.product.sell_price - self.product.sell_price)
 
             if self.discount_type == "%":
-                if self.discount <= self.product.max_discount:
+                if 0 < self.discount <= self.product.max_discount:
                     self.total = Decimal(self.amount) * self.product.sell_price * (self.discount / 100)
                 else:
                     raise ValidationError({"detail": "problem in discount"})
             elif self.discount_type == "$":
-                if self.discount <= self.product.sell_price * self.product.max_discount / 100:
+                if 0 < self.discount <= self.product.sell_price * self.product.max_discount / 100:
                     self.total = Decimal(self.amount) * self.product.sell_price - self.discount
                 else:
                     raise ValidationError({"detail": "problem in discount"})
