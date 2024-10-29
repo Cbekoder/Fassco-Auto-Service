@@ -10,8 +10,9 @@ class IsSuperStatus(BasePermission):
     def has_permission(self, request, view):
         return request.user.is_superuser
 
-class IsStaffStatus(BasePermission):
+class IsAdminUser(BasePermission):
     def has_permission(self, request, view):
-        if request.user.is_anonymous:
-            return False
-        return request.user.is_staff or request.user.is_superuser
+        if request.user.is_authenticated:
+            if not request.user.is_superuser and not request.user.is_staff:
+                return True
+        return False

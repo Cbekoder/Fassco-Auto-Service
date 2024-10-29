@@ -4,13 +4,13 @@ from rest_framework.generics import RetrieveUpdateDestroyAPIView, ListCreateAPIV
 from rest_framework.permissions import IsAuthenticated
 from .models import Product, Service, Car
 from .serializers import ProductSerializer, ServiceSerializer, CarSerializer
-from users.permissions import IsSameBranch, IsStaffStatus
+from users.permissions import IsSameBranch, IsAdminUser
 
 
 class ProductListCreateView(ListCreateAPIView):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
-    permission_classes = [IsAuthenticated, IsSameBranch]
+    permission_classes = [IsAdminUser, IsSameBranch]
 
     def get_queryset(self):
         if self.request.user.is_authenticated:
@@ -25,7 +25,7 @@ class ProductListCreateView(ListCreateAPIView):
 class ProductRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
-    permission_classes = [IsAuthenticated, IsSameBranch]
+    permission_classes = [IsAdminUser, IsSameBranch]
 
     def get_queryset(self):
         if self.request.user.is_authenticated:
@@ -35,7 +35,7 @@ class ProductRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
 class ServiceListCreateView(ListCreateAPIView):
     queryset = Service.objects.all()
     serializer_class = ServiceSerializer
-    permission_classes = [IsAuthenticated, IsSameBranch]
+    permission_classes = [IsAdminUser, IsSameBranch]
 
     def get_queryset(self):
         return self.queryset.filter(branch=self.request.user.branch).order_by('-id')
@@ -47,7 +47,7 @@ class ServiceListCreateView(ListCreateAPIView):
 class ServiceRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
     queryset = Service.objects.all()
     serializer_class = ServiceSerializer
-    permission_classes = [IsAuthenticated, IsSameBranch]
+    permission_classes = [IsAdminUser, IsSameBranch]
 
     def get_queryset(self):
         if self.request.user.is_authenticated:
@@ -57,7 +57,7 @@ class ServiceRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
 class CarListCreateView(ListCreateAPIView):
     queryset = Car.objects.all()
     serializer_class = CarSerializer
-    permission_classes = [IsAuthenticated, IsSameBranch]
+    permission_classes = [IsAdminUser, IsSameBranch]
 
     @swagger_auto_schema(
         manual_parameters=[
@@ -88,7 +88,7 @@ class CarListCreateView(ListCreateAPIView):
 class CarRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
     queryset = Car.objects.all()
     serializer_class = CarSerializer
-    permission_classes = [IsAuthenticated, IsSameBranch]
+    permission_classes = [IsAdminUser, IsSameBranch]
 
     def get_queryset(self):
         if self.request.user.is_authenticated:

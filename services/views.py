@@ -1,13 +1,14 @@
 from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView
 from rest_framework.permissions import IsAuthenticated
 
+from users.permissions import IsAdminUser
 from .models import Order
 from .serializers import OrderPostSerializer, OrderListSerializer
 
 
 class OrderListCreateView(ListCreateAPIView):
     queryset = Order.objects.all()
-    permission_classes = (IsAuthenticated,)
+    permission_classes = [IsAdminUser,]
     serializer_class = OrderPostSerializer
 
     def get_queryset(self):
@@ -23,7 +24,7 @@ class OrderListCreateView(ListCreateAPIView):
 
 class OrderDetailView(RetrieveUpdateDestroyAPIView):
     queryset = Order.objects.all()
-    permission_classes = (IsAuthenticated,)
+    permission_classes = [IsAdminUser,]
     serializer_class = OrderListSerializer
 
     def get_queryset(self):

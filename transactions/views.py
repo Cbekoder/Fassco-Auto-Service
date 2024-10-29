@@ -13,7 +13,7 @@ from django.db.models import Sum, Q, F
 
 from branches.models import Wallet
 from services.models import Order
-from users.permissions import IsStaffStatus
+from users.permissions import IsAdminUser
 from .models import ExpenseType, Expense, Salary, ImportList, ImportProduct, Debt, BranchFundTransfer, Lending
 from .serializers import (
     ExpenseTypeSerializer, ExpenseSerializer, SalarySerializer,
@@ -27,7 +27,7 @@ from .serializers import (
 class GetDebtCreateView(CreateAPIView):
     queryset = Debt.objects.all()
     serializer_class = GetPayDebtSerializer
-    permission_classes = (IsAuthenticated,)
+    permission_classes = (IsAdminUser,)
     
     def perform_create(self, serializer):
         branch = self.request.user.branch
@@ -44,7 +44,7 @@ class GetDebtCreateView(CreateAPIView):
 class PayDebtCreateView(CreateAPIView):
     queryset = Debt.objects.all()
     serializer_class = GetPayDebtSerializer
-    permission_classes = (IsAuthenticated,)
+    permission_classes = (IsAdminUser,)
 
     def perform_create(self, serializer):
         branch = self.request.user.branch
@@ -60,7 +60,7 @@ class PayDebtCreateView(CreateAPIView):
 class DebtListView(ListAPIView):
     queryset = Debt.objects.all()
     serializer_class = DebtSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAdminUser]
 
     @swagger_auto_schema(
         manual_parameters=[
@@ -92,7 +92,7 @@ class DebtListView(ListAPIView):
 class DebtDetailView(RetrieveUpdateDestroyAPIView):
     queryset = Debt.objects.all()
     serializer_class = DebtUpdateSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAdminUser]
 
     def get_queryset(self):
         if self.request.user.is_authenticated:
@@ -102,7 +102,7 @@ class DebtDetailView(RetrieveUpdateDestroyAPIView):
 class ExpenseTypeListCreateView(ListCreateAPIView):
     queryset = ExpenseType.objects.all()
     serializer_class = ExpenseTypeSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAdminUser]
 
     def perform_create(self, serializer):
         serializer.save(
@@ -118,7 +118,7 @@ class ExpenseTypeListCreateView(ListCreateAPIView):
 class ExpenseTypeDetailView(RetrieveUpdateDestroyAPIView):
     queryset = ExpenseType.objects.all()
     serializer_class = ExpenseTypeSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAdminUser]
 
     def get_queryset(self):
         if self.request.user.is_authenticated:
@@ -129,7 +129,7 @@ class ExpenseTypeDetailView(RetrieveUpdateDestroyAPIView):
 class ExpenseListCreateView(ListCreateAPIView):
     queryset = Expense.objects.all()
     serializer_class = ExpenseSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAdminUser]
 
     def get_queryset(self):
         if self.request.user.is_authenticated:
@@ -146,7 +146,7 @@ class ExpenseListCreateView(ListCreateAPIView):
 class ExpenseDetailView(RetrieveUpdateDestroyAPIView):
     queryset = Expense.objects.all()
     serializer_class = ExpenseSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAdminUser]
 
     def get_queryset(self):
         if self.request.user.is_authenticated:
@@ -169,7 +169,7 @@ class ImportCreateView(APIView):
 class ImportListAPIView(ListAPIView):
     queryset = ImportList.objects.all()
     serializer_class = ImportListSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAdminUser]
 
     def get_queryset(self):
         if self.request.user.is_authenticated:
@@ -184,7 +184,7 @@ class ImportListAPIView(ListAPIView):
 class ImportListDetailAPIView(RetrieveUpdateDestroyAPIView):
     queryset = ImportList.objects.all()
     serializer_class = GetImportListSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAdminUser]
 
     def get_queryset(self):
         if self.request.user.is_authenticated:
@@ -193,7 +193,7 @@ class ImportListDetailAPIView(RetrieveUpdateDestroyAPIView):
 
 
 class BranchFundTransferListCreateView(ListCreateAPIView):
-    permission_classes = (IsStaffStatus,)
+    permission_classes = (IsAdminUser,)
 
     queryset = BranchFundTransfer.objects.all()
     serializer_class = BranchFundTransferSerializer
@@ -222,7 +222,7 @@ class BranchFundTransferListCreateView(ListCreateAPIView):
 class GiveLendingCreateView(CreateAPIView):
     queryset = Lending.objects.all()
     serializer_class = GivePayLendingSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAdminUser]
 
     def perform_create(self, serializer):
         branch = self.request.user.branch
@@ -243,7 +243,7 @@ class GiveLendingCreateView(CreateAPIView):
 class PayLendingCreateView(CreateAPIView):
     queryset = Lending.objects.all()
     serializer_class = GivePayLendingSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAdminUser]
 
     def perform_create(self, serializer):
         branch = self.request.user.branch
@@ -264,7 +264,7 @@ class PayLendingCreateView(CreateAPIView):
 class LendingListView(ListAPIView):
     queryset = Lending.objects.all()
     serializer_class = LendingListSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAdminUser]
 
     @swagger_auto_schema(
         manual_parameters=[
@@ -296,7 +296,7 @@ class LendingListView(ListAPIView):
 class LendingDetailView(RetrieveUpdateDestroyAPIView):
     queryset = Lending.objects.all()
     serializer_class = LendingUpdateSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAdminUser]
 
     def get_queryset(self):
         if self.request.user.is_authenticated:
@@ -307,7 +307,7 @@ class LendingDetailView(RetrieveUpdateDestroyAPIView):
 class SalaryListCreateView(ListCreateAPIView):
     queryset = Salary.objects.all()
     serializer_class = SalarySerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAdminUser]
 
     def perform_create(self, serializer):
         serializer.save(
@@ -324,7 +324,7 @@ class SalaryListCreateView(ListCreateAPIView):
 class SalaryDetailView(RetrieveUpdateDestroyAPIView):
     queryset = Salary.objects.all()
     serializer_class = SalaryUpdateSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAdminUser]
 
     def get_queryset(self):
         if self.request.user.is_authenticated:
@@ -333,7 +333,7 @@ class SalaryDetailView(RetrieveUpdateDestroyAPIView):
 
 
 class DetailedBranchStatisticsView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAdminUser]
 
     def get(self, request, duration, start_date=None, end_date=None):
         if duration == "custom":
