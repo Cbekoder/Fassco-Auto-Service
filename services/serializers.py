@@ -63,9 +63,9 @@ class OrderPostSerializer(ModelSerializer):
 
             if isinstance(car, int):
                 car = Car.objects.get(id=car)
-            validated_data['total'] =  0 if validated_data.get('total') is None else validated_data.get('total')
-            validated_data['landing'] =  0 if validated_data.get('landing') is None else validated_data.get('landing')
-            validated_data['overall_total'] = 0 if validated_data.get('overall_total') is None else validated_data.get('overall_total')
+            validated_data['total'] =  0
+            validated_data['landing'] = 0
+            validated_data['overall_total'] = 0
 
             order = Order.objects.create(**validated_data, branch=car.branch)
             service_responses = []

@@ -104,7 +104,8 @@ class OrderService(models.Model):
                 self.mechanic.balance -= self.mechanic.kpi * old_instance.part
 
                 if old_instance.discount_type == "%":
-                    self.order.total -= old_instance.service.price * old_instance.part * (old_instance.discount / 100)
+                    current_total = old_instance.service.price * old_instance.part
+                    self.order.total -= current_total * (old_instance.discount / 100)
                 elif old_instance.discount_type == "$":
                     self.order.total -= old_instance.service.price * old_instance.part - old_instance.discount
                 self.order.overall_total -= old_instance.service.price
@@ -112,7 +113,7 @@ class OrderService(models.Model):
             self.total = self.service.price * Decimal(self.part)
             if self.discount_type == "%":
                 if 0 < self.discount < 100:
-                    self.total *= self.discount / 100
+                    self.total -= self.total * self.discount / 100
                 elif self.discount > 100:
                     raise ValidationError({'detail': 'If dicount_type is %, Discount must be between 0 and 100'})
             if self.discount_type == "$":
@@ -171,7 +172,8 @@ class OrderProduct(models.Model):
                 self.product.amount += old_instance.amount
 
                 if old_instance.discount_type == "%" and old_instance.discount <= old_instance.product.max_discount:
-                    self.order.total -= old_instance.amount * old_instance.product.sell_price * (old_instance.discount / 100)
+                    current_total = old_instance.amount * old_instance.product.sell_price
+                    self.order.total -= current_total * (old_instance.discount / 100)
                 elif old_instance.discount_type == "$" and old_instance.discount <= old_instance.product.sell_price * old_instance.product.max_discount / 100:
                     self.order.total -= old_instance.amount * old_instance.product.sell_price - old_instance.discount
                 self.order.overall_total -= old_instance.amount * old_instance.product.sell_price
@@ -180,8 +182,11 @@ class OrderProduct(models.Model):
                             self.product.sell_price - self.product.sell_price)
 
             if self.discount_type == "%":
+                self.total = Decimal(self.amount) * self.product.sell_price
                 if 0 < self.discount <= self.product.max_discount:
-                    self.total = Decimal(self.amount) * self.product.sell_price * (self.discount / 100)
+                    self.total -= self.total * (self.discount / 100)
+                elif self.discount == 0:
+                    pass
                 else:
                     raise ValidationError({"detail": "problem in discount"})
             elif self.discount_type == "$":
@@ -189,10 +194,6 @@ class OrderProduct(models.Model):
                     self.total = Decimal(self.amount) * self.product.sell_price - self.discount
                 else:
                     raise ValidationError({"detail": "problem in discount"})
-
-
-            if self.total != Decimal(self.amount) * self.product.sell_price:
-                self.total = Decimal(self.amount) * self.product.sell_price
 
             super().save(*args, **kwargs)
 
