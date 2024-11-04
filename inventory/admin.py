@@ -3,8 +3,8 @@ from .models import Product, Service, Car
 
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
-    list_display = ('code', 'name', 'amount', 'unit', 'arrival_price', 'sell_price', 'min_amount', 'max_discount', 'supplier', 'branch', 'created_at', 'updated_at')
-    search_fields = ('code', 'name', 'supplier__first_name')  # Enable search by code, name, and supplier name
+    list_display = ('articul', 'name', 'amount', 'unit', 'arrival_price', 'sell_price', 'min_amount', 'max_discount', 'supplier', 'branch', 'created_at', 'updated_at')
+    search_fields = ('articul', 'name', 'supplier__first_name')  # Enable search by code, name, and supplier name
     list_filter = ('branch', 'created_at', 'updated_at')  # Filter by branch and dates
     ordering = ('-created_at',)  # Order by newest first
 

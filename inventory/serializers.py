@@ -5,7 +5,7 @@ from .models import Product, Service, Car
 class ProductSerializer(ModelSerializer):
     class Meta:
         model = Product
-        fields = ['id', 'code', 'name', 'amount', 'unit', 'arrival_price', 'sell_price', 'min_amount', 'max_discount',
+        fields = ['id', 'articul', 'name', 'amount', 'unit', 'arrival_price', 'sell_price', 'min_amount', 'max_discount',
                   'supplier', 'branch', 'created_at', 'updated_at']
         read_only_fields = ['id', 'branch', 'created_at', 'updated_at']
 
@@ -22,7 +22,7 @@ class ProductSerializer(ModelSerializer):
 class ProductImportDetailSerializer(ModelSerializer):
     class Meta:
         model = Product
-        fields = ['id', 'code', 'name', 'amount', 'unit', 'arrival_price']
+        fields = ['id', 'articul', 'name', 'amount', 'unit', 'arrival_price']
 
 class ServiceSerializer(ModelSerializer):
     class Meta:
