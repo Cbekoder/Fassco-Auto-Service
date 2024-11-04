@@ -14,13 +14,14 @@ from django.db.models import Sum, Q, F
 from branches.models import Wallet
 from services.models import Order
 from users.permissions import IsAdminUser
-from .models import ExpenseType, Expense, Salary, ImportList, ImportProduct, Debt, BranchFundTransfer, Lending
+from .models import ExpenseType, Expense, Salary, ImportList, ImportProduct, Debt, BranchFundTransfer, Lending, \
+    PaymentType
 from .serializers import (
     ExpenseTypeSerializer, ExpenseSerializer, SalarySerializer,
     ImportListSerializer, ImportProductSerializer, DebtSerializer,
     BranchFundTransferSerializer, BranchFundTransferPostSerializer, LendingListSerializer,
     GetPayDebtSerializer, GivePayLendingSerializer, DebtUpdateSerializer, GetImportListSerializer,
-    LendingUpdateSerializer, SalaryUpdateSerializer
+    LendingUpdateSerializer, SalaryUpdateSerializer, PaymentTypeSerializer
 )
 
 
@@ -118,6 +119,32 @@ class ExpenseTypeListCreateView(ListCreateAPIView):
 class ExpenseTypeDetailView(RetrieveUpdateDestroyAPIView):
     queryset = ExpenseType.objects.all()
     serializer_class = ExpenseTypeSerializer
+    permission_classes = [IsAdminUser]
+
+    def get_queryset(self):
+        if self.request.user.is_authenticated:
+            return self.queryset.filter(branch=self.request.user.branch)
+        return self.queryset
+
+class PaymentTypeListCreateView(ListCreateAPIView):
+    queryset = PaymentType.objects.all()
+    serializer_class = PaymentTypeSerializer
+    permission_classes = [IsAdminUser]
+
+    def perform_create(self, serializer):
+        serializer.save(
+            branch=self.request.user.branch
+        )
+
+    def get_queryset(self):
+        if self.request.user.is_authenticated:
+            return self.queryset.filter(branch=self.request.user.branch).order_by('-id')
+        return self.queryset.none()
+
+
+class PaymentTypeDetailView(RetrieveUpdateDestroyAPIView):
+    queryset = PaymentType.objects.all()
+    serializer_class = PaymentTypeSerializer
     permission_classes = [IsAdminUser]
 
     def get_queryset(self):
@@ -377,9 +404,9 @@ class DetailedBranchStatisticsView(APIView):
             "total_income": order_income_total + lending_income_total
         }
 
-        import_expenses = ImportList.objects.filter(branch=self.request.user.branch, created_at__range=[start_date, end_date])
-        import_expense_details = import_expenses.values("supplier__first_name").annotate(total_paid=Sum("paid"))
-        import_outcome_total = import_expenses.aggregate(total=Sum("paid"))["total"] or 0
+        # import_expenses = ImportList.objects.filter(branch=self.request.user.branch, created_at__range=[start_date, end_date])
+        # import_expense_details = import_expenses.values("supplier__first_name").annotate(total_paid=Sum("paid"))
+        # import_outcome_total = import_expenses.aggregate(total=Sum("paid"))["total"] or 0
 
         expenses = Expense.objects.filter(branch=self.request.user.branch, created_at__range=[start_date, end_date])
         general_expense_details = expenses.values("type__name").annotate(total_amount=Sum("amount"))
@@ -389,15 +416,15 @@ class DetailedBranchStatisticsView(APIView):
         salary_details = salaries.values("employee__first_name").annotate(total_amount=Sum("amount"))
         salary_outcome_total = salaries.aggregate(total=Sum("amount"))["total"] or 0
 
-        debts = Debt.objects.filter(branch=self.request.user.branch, created_at__range=[start_date, end_date], is_debt=False)
-        debt_details = debts.values("supplier__first_name").annotate(total_debt=Sum("debt_amount"))
-        debt_outcome_total = debts.aggregate(total=Sum("debt_amount"))["total"] or 0
+        # debts = Debt.objects.filter(branch=self.request.user.branch, created_at__range=[start_date, end_date], is_debt=False)
+        # debt_details = debts.values("supplier__first_name").annotate(total_debt=Sum("debt_amount"))
+        # debt_outcome_total = debts.aggregate(total=Sum("debt_amount"))["total"] or 0
 
         outcomes = {
-            "import_payments": {
-                "total": import_outcome_total,
-                "details": list(import_expense_details)
-            },
+            # "import_payments": {
+            #     "total": import_outcome_total,
+            #     "details": list(import_expense_details)
+            # },
             "general_expenses": {
                 "total": general_expense_total,
                 "details": list(general_expense_details)
@@ -406,11 +433,12 @@ class DetailedBranchStatisticsView(APIView):
                 "total": salary_outcome_total,
                 "details": list(salary_details)
             },
-            "supplier_debts": {
-                "total": debt_outcome_total,
-                "details": list(debt_details)
-            },
-            "total_outcome": import_outcome_total + general_expense_total + salary_outcome_total + debt_outcome_total
+            # "supplier_debts": {
+            #     "total": debt_outcome_total,
+            #     "details": list(debt_details)
+            # },
+            # "total_outcome": import_outcome_total + general_expense_total + salary_outcome_total + debt_outcome_total
+            "total_outcome": general_expense_total + salary_outcome_total
         }
 
         net_income = incomes["total_income"] - outcomes["total_outcome"]
