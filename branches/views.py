@@ -14,6 +14,7 @@ class BranchBalanceAPIView(APIView):
         operation_description="Retrieve the balance of the authenticated user's branch."
     )
     def get(self, request):
-        branch = Branch.objects.get(id=request.user.branch.id)
-        serializer = BranchBalanceSerializer(branch)
-        return Response(serializer.data)
+        if request.user.is_authenticated:
+            branch = Branch.objects.get(id=request.user.branch.id)
+            serializer = BranchBalanceSerializer(branch)
+            return Response(serializer.data)
