@@ -3,7 +3,7 @@ from drf_yasg.utils import swagger_auto_schema
 from rest_framework.generics import RetrieveUpdateDestroyAPIView, ListCreateAPIView
 from rest_framework.permissions import IsAuthenticated
 from .models import Product, Service, Car
-from .serializers import ProductSerializer, ServiceSerializer, CarSerializer
+from .serializers import ProductSerializer, ServiceSerializer, CarSerializer, ProductPostSerializer
 from users.permissions import IsSameBranch, IsAdminUser
 
 
@@ -11,6 +11,11 @@ class ProductListCreateView(ListCreateAPIView):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
     permission_classes = [IsAdminUser, IsSameBranch]
+
+    def get_serializer_class(self):
+        if self.request.method == 'POST':
+            return ProductPostSerializer
+        return ProductSerializer
 
     def get_queryset(self):
         if self.request.user.is_authenticated:

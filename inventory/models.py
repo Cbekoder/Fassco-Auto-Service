@@ -8,14 +8,14 @@ from users.models import Supplier, Client
 
 
 class Product(models.Model):
-    articul = models.CharField(max_length=20, blank=False, null=False, verbose_name=_('Code'))
+    code = models.CharField(max_length=20, blank=False, null=False, verbose_name=_('Code'))
     name = models.CharField(max_length=255, verbose_name=_('Name'))
     amount = models.FloatField(default=0, validators=[MinValueValidator(0)],  verbose_name=_('Amount'))
     unit = models.CharField(max_length=50, blank=True, null=True, verbose_name=_('Unit'))
     arrival_price = models.DecimalField(max_digits=15, decimal_places=0, verbose_name=_('Import price'))
     sell_price = models.DecimalField(max_digits=15, decimal_places=0, verbose_name=_('Export price'))
     min_amount = models.FloatField(default=0, verbose_name=_('Min amount'))
-    max_discount = models.PositiveIntegerField(default=0, validators=[MinValueValidator(0), MaxValueValidator(100)], verbose_name=_('Max discount'))
+    is_temp = models.BooleanField(default=True, null=True)
 
     supplier = models.ForeignKey(Supplier, on_delete=models.CASCADE, verbose_name=_('Supplier'))
     branch = models.ForeignKey(Branch, on_delete=models.CASCADE, verbose_name=_('Branch'))
