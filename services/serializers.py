@@ -5,13 +5,14 @@ from rest_framework.serializers import ModelSerializer, DecimalField, PrimaryKey
 
 from branches.serializers import BranchBalanceSerializer
 from inventory.models import Product, Car
-from inventory.serializers import CarSerializer
+from inventory.serializers import CarSerializer, ServiceSerializer, ProductSerializer
 from users.models import Employee, Client
 from users.serializers import ManagerSerializer, ClientSerializer
 from .models import Order, OrderService, OrderProduct
 
 
 class OrderServiceSerializer(ModelSerializer):
+    service = ServiceSerializer()
     class Meta:
         model = OrderService
         fields = ['id', 'service', 'total', 'part', 'discount_type', 'discount', 'mechanic', 'description']
@@ -22,6 +23,7 @@ class OrderServiceSerializer(ModelSerializer):
 
 
 class OrderProductSerializer(ModelSerializer):
+    product = ProductSerializer()
     class Meta:
         model = OrderProduct
         fields = ['id', 'product', 'amount', 'total', 'discount_type', 'discount', 'description']
