@@ -20,6 +20,10 @@ class Order(models.Model):
     hev_mileage = models.FloatField(blank=True, null=True, verbose_name=_('HEV mileage'))
     ev_mileage = models.FloatField(blank=True, null=True, verbose_name=_('EV mileage'))
 
+    start_date = models.DateField(auto_now=True, verbose_name=_('Start date'))
+    end_date = models.DateField(auto_now=True, verbose_name=_('End date'))
+    plan_date = models.DateField(auto_now=True, verbose_name=_('Plan date'))
+
     branch = models.ForeignKey(Branch, on_delete=models.CASCADE, verbose_name=_('Branch'))
     manager = models.ForeignKey(Employee, on_delete=models.SET_NULL, null=True, verbose_name=_('Manager'))
 
@@ -37,10 +41,10 @@ class Order(models.Model):
             self.client = self.car.client
             if self.manager and self.manager.position != "manager":
                 raise ValidationError(f"Employee isn't manager")
-            if self.pk:
-                old_instance = Order.objects.get(pk=self.pk)
-                self.car.client.lending -= old_instance.landing
-                self.branch.balance -= old_instance.paid
+            # if self.pk:
+            #     old_instance = Order.objects.get(pk=self.pk)
+            #     self.car.client.lending -= old_instance.landing
+            #     self.branch.balance -= old_instance.paid
 
             super().save(*args, **kwargs)
 
@@ -98,29 +102,30 @@ class OrderService(models.Model):
 
     def save(self, *args, **kwargs):
         with transaction.atomic():
-            if self.pk:
-                old_instance = OrderService.objects.get(pk=self.pk)
-
-                self.mechanic.balance -= self.mechanic.kpi * old_instance.part
-
-                if old_instance.discount_type == "%":
-                    current_total = old_instance.service.price * old_instance.part
-                    self.order.total -= current_total * (old_instance.discount / 100)
-                elif old_instance.discount_type == "$":
-                    self.order.total -= old_instance.service.price * old_instance.part - old_instance.discount
-                self.order.overall_total -= old_instance.service.price
+            # if self.pk:
+            #     old_instance = OrderService.objects.get(pk=self.pk)
+            #
+            #     self.mechanic.balance -= self.mechanic.kpi * old_instance.part
+            #
+            #     if old_instance.discount_type == "%":
+            #         current_total = old_instance.service.price * old_instance.part
+            #         self.order.total -= current_total * (old_instance.discount / 100)
+            #     elif old_instance.discount_type == "$":
+            #         self.order.total -= old_instance.service.price * old_instance.part - old_instance.discount
+            #     self.order.overall_total -= old_instance.service.price
 
             self.total = self.service.price * Decimal(self.part)
-            if self.discount_type == "%":
-                if 0 < self.discount < 100:
-                    self.total -= self.total * self.discount / 100
-                elif self.discount > 100:
-                    raise ValidationError({'detail': 'If dicount_type is %, Discount must be between 0 and 100'})
-            if self.discount_type == "$":
-                if 1000 < self.discount < self.service.price:
-                    self.total -= self.discount
-                else:
-                    raise ValidationError({'detail': 'If discount_type is $, Discount must be between 1000 and service.price'})
+            if self.discount > 0:
+                if self.discount_type == "%":
+                    if 0 < self.discount < 100:
+                        self.total -= self.total * self.discount / 100
+                    else:
+                        raise ValidationError({'detail': 'Discount amount must be from 0 to 100 if discout type is %'})
+                if self.discount_type == "$":
+                    if 0 < self.discount < self.service.price:
+                        self.total -= self.discount
+                    else:
+                        raise ValidationError({'detail': 'If discount_type is $, Discount must be between 1000 and service.price'})
 
             super().save(*args, **kwargs)
 
@@ -166,34 +171,33 @@ class OrderProduct(models.Model):
     def save(self, *args, **kwargs):
         with transaction.atomic():
             manager = self.order.manager
-            if self.pk:
-                old_instance = OrderProduct.objects.get(pk=self.pk)
+            # if self.pk:
+            #     old_instance = OrderProduct.objects.get(pk=self.pk)
+            #
+            #     self.product.amount += old_instance.amount
+            #
+            #     if old_instance.discount_type == "%" and 0 < self.discount <= 100:
+            #         current_total = old_instance.amount * old_instance.product.sell_price
+            #         self.order.total -= current_total * (old_instance.discount / 100)
+            #     elif old_instance.discount_type == "$" and old_instance.discount <= old_instance.product.sell_price:
+            #         self.order.total -= old_instance.amount * old_instance.product.sell_price - old_instance.discount
+            #     self.order.overall_total -= old_instance.amount * old_instance.product.sell_price
+            #
+            #     manager.balance -= (manager.commission_per / 100) * old_instance.amount * (
+            #                 self.product.sell_price - self.product.sell_price)
 
-                self.product.amount += old_instance.amount
-
-                if old_instance.discount_type == "%" and old_instance.discount <= old_instance.product.max_discount:
-                    current_total = old_instance.amount * old_instance.product.sell_price
-                    self.order.total -= current_total * (old_instance.discount / 100)
-                elif old_instance.discount_type == "$" and old_instance.discount <= old_instance.product.sell_price * old_instance.product.max_discount / 100:
-                    self.order.total -= old_instance.amount * old_instance.product.sell_price - old_instance.discount
-                self.order.overall_total -= old_instance.amount * old_instance.product.sell_price
-
-                manager.balance -= (manager.commission_per / 100) * old_instance.amount * (
-                            self.product.sell_price - self.product.sell_price)
-
-            if self.discount_type == "%":
-                self.total = Decimal(self.amount) * self.product.sell_price
-                if 0 < self.discount <= self.product.max_discount:
-                    self.total -= self.total * (self.discount / 100)
-                elif self.discount == 0:
-                    pass
-                else:
-                    raise ValidationError({"detail": "problem in discount"})
-            elif self.discount_type == "$":
-                if 0 < self.discount <= self.product.sell_price * self.product.max_discount / 100:
-                    self.total = Decimal(self.amount) * self.product.sell_price - self.discount
-                else:
-                    raise ValidationError({"detail": "problem in discount"})
+            self.total = Decimal(self.amount) * self.product.sell_price
+            if self.discount > 0:
+                if self.discount_type == "%":
+                    if 0 < self.discount <= 100:
+                        self.total -= self.total * (self.discount / 100)
+                    else:
+                        raise ValidationError({"detail": "Discount amount must be from 0 to 100 if discout type is %"})
+                elif self.discount_type == "$":
+                    if 0 < self.discount <= self.product.sell_price:
+                        self.total -= self.discount
+                    else:
+                        raise ValidationError({"detail": "Discount amount must be from 0 to product sell price if discout type is $"})
 
             super().save(*args, **kwargs)
 

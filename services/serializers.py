@@ -3,8 +3,11 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.fields import SerializerMethodField
 from rest_framework.serializers import ModelSerializer, DecimalField, PrimaryKeyRelatedField
 
+from branches.serializers import BranchBalanceSerializer
 from inventory.models import Product, Car
+from inventory.serializers import CarSerializer
 from users.models import Employee, Client
+from users.serializers import ManagerSerializer, ClientSerializer
 from .models import Order, OrderService, OrderProduct
 
 
@@ -43,7 +46,7 @@ class OrderPostSerializer(ModelSerializer):
     class Meta:
         model = Order
         fields = ['id', 'client', 'car', 'description', 'overall_total', 'total', 'paid', 'landing', 'odo_mileage', 'hev_mileage', 'ev_mileage',
-                  'branch', 'manager', 'created_at', 'services', 'products']
+                  'branch', 'manager', 'start_date', 'end_date', 'plan_date', 'created_at', 'services', 'products']
         read_only_fields = ['id', 'created_at', 'branch', 'overall_total']
 
     total = DecimalField(max_digits=15, decimal_places=0, required=False)
@@ -89,12 +92,33 @@ class OrderPostSerializer(ModelSerializer):
 class OrderListSerializer(ModelSerializer):
     services = OrderServiceSerializer(source='orderservice_set', many=True)
     products = OrderProductSerializer(source='orderproduct_set', many=True)
+    car = CarSerializer()
+    manager = ManagerSerializer()
+    branch = BranchBalanceSerializer()
+    client = ClientSerializer()
+
+    start_date = SerializerMethodField()
+    end_date = SerializerMethodField()
+    plan_date = SerializerMethodField()
+    created_at = SerializerMethodField()
 
     class Meta:
         model = Order
         fields = ['id', 'client', 'car', 'description', 'overall_total', 'total', 'paid', 'landing', 'odo_mileage', 'hev_mileage', 'ev_mileage',
-                  'branch', 'manager', 'created_at', 'services', 'products']
+                  'branch', 'manager', 'start_date', 'end_date', 'plan_date', 'created_at', 'services', 'products']
         read_only_fields = ['client', 'branch', 'created_at']
 
     def get_client(self, obj):
         return Client.objects.get(id=obj.car.client.id)
+
+    def get_start_date(self, obj):
+        return obj.start_date.strftime('%d.%m.%Y') if obj.start_date else None
+
+    def get_end_date(self, obj):
+        return obj.end_date.strftime('%d.%m.%Y') if obj.end_date else None
+
+    def get_plan_date(self, obj):
+        return obj.plan_date.strftime('%d.%m.%Y') if obj.plan_date else None
+
+    def get_created_at(self, obj):
+        return obj.created_at.strftime('%d.%m.%Y') if obj.created_at else None
