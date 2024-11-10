@@ -15,6 +15,8 @@ class Order(models.Model):
     total = models.DecimalField(max_digits=15, decimal_places=0, verbose_name=_('Total'))
     paid = models.DecimalField(max_digits=15, decimal_places=0, verbose_name=_('Paid'))
     landing = models.DecimalField(max_digits=15, decimal_places=0, verbose_name=_('Debt'))
+    product_total = models.DecimalField(default=0, max_digits=15, decimal_places=0, verbose_name=_('Product Total'))
+    service_total = models.DecimalField(default=0, max_digits=15, decimal_places=0, verbose_name=_('Service Total'))
 
     odo_mileage = models.FloatField(blank=True, null=True, verbose_name=_('ODO mileage'))
     hev_mileage = models.FloatField(blank=True, null=True, verbose_name=_('HEV mileage'))
@@ -130,12 +132,12 @@ class OrderService(models.Model):
             super().save(*args, **kwargs)
 
             self.mechanic.balance += self.mechanic.kpi * Decimal(self.part)
+            self.mechanic.save()
 
             self.order.total += self.total
+            self.order.service_total += self.total
             self.order.overall_total += self.service.price * Decimal(self.part)
             self.order.save()
-
-            self.mechanic.save()
 
     def delete(self, *args, **kwargs):
         with transaction.atomic():
@@ -205,6 +207,7 @@ class OrderProduct(models.Model):
             manager.save()
 
             self.order.total += self.total
+            self.order.product_total += self.total
             self.order.overall_total += Decimal(self.amount) * self.product.sell_price
             self.order.save()
 

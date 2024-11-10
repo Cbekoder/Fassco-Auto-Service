@@ -1,6 +1,6 @@
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
-from rest_framework.generics import RetrieveUpdateDestroyAPIView, ListCreateAPIView
+from rest_framework.generics import RetrieveUpdateDestroyAPIView, ListCreateAPIView, ListAPIView
 from rest_framework.permissions import IsAuthenticated
 from .models import Product, Service, Car
 from .serializers import ProductSerializer, ServiceSerializer, CarSerializer, ProductPostSerializer
@@ -9,7 +9,7 @@ from users.permissions import IsSameBranch, IsAdminUser
 
 class ProductListCreateView(ListCreateAPIView):
     queryset = Product.objects.all()
-    serializer_class = ProductSerializer
+    serializer_class = ProductPostSerializer
     permission_classes = [IsAdminUser, IsSameBranch]
 
     def get_serializer_class(self):
@@ -19,13 +19,23 @@ class ProductListCreateView(ListCreateAPIView):
 
     def get_queryset(self):
         if self.request.user.is_authenticated:
-            return self.queryset.filter(branch=self.request.user.branch).order_by('-created_at')
+            return self.queryset.filter(branch=self.request.user.branch, is_temp=False).order_by('-created_at')
         return self.queryset.none()
 
     def perform_create(self, serializer):
         serializer.save(
             branch=self.request.user.branch
         )
+
+class TempProductListView(ListAPIView):
+    queryset = Product.objects.all()
+    serializer_class = ProductPostSerializer
+    permission_classes = [IsAdminUser, IsSameBranch]
+
+    def get_queryset(self):
+        if self.request.user.is_authenticated:
+            return self.queryset.filter(branch=self.request.user.branch, is_temp=True).order_by('-created_at')
+        return self.queryset.none()
 
 class ProductRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
     queryset = Product.objects.all()

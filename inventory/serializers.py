@@ -39,9 +39,9 @@ class CarSerializer(ModelSerializer):
     class Meta:
         model = Car
         fields = [
-            'id', 'name', 'brand', 'color', 'state_number', 'vin_code', 'is_sold',
+            'id', 'name', 'brand', 'color', 'state_number', 'vin_code', 'year_manufacture', 'is_sold',
             'odo_mileage', 'hev_mileage', 'ev_mileage', 'client', 'branch',
             'created_at'
         ]
-        read_only_fields = ['id', 'is_sold', 'branch', 'created_at']
+        read_only_fields = ['id', 'branch', 'created_at']
 
