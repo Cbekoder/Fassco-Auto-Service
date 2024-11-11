@@ -34,7 +34,6 @@ class ServiceSerializer(ModelSerializer):
         read_only_fields = ['id', 'branch']
 
 
-
 class CarSerializer(ModelSerializer):
     class Meta:
         model = Car

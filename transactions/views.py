@@ -14,14 +14,13 @@ from django.db.models import Sum, Q, F
 from branches.models import Wallet
 from services.models import Order
 from users.permissions import IsAdminUser
-from .models import ExpenseType, Expense, Salary, ImportList, ImportProduct, Debt, BranchFundTransfer, Lending, \
-    PaymentType
+from .models import ExpenseType, Expense, Salary, ImportList, ImportProduct, Debt, BranchFundTransfer, Lending
 from .serializers import (
     ExpenseTypeSerializer, ExpenseSerializer, SalarySerializer,
     ImportListSerializer, ImportProductSerializer, DebtSerializer,
     BranchFundTransferSerializer, BranchFundTransferPostSerializer, LendingListSerializer,
     GetPayDebtSerializer, GivePayLendingSerializer, DebtUpdateSerializer, GetImportListSerializer,
-    LendingUpdateSerializer, SalaryUpdateSerializer, PaymentTypeSerializer
+    LendingUpdateSerializer, SalaryUpdateSerializer
 )
 
 
@@ -125,33 +124,6 @@ class ExpenseTypeDetailView(RetrieveUpdateDestroyAPIView):
         if self.request.user.is_authenticated:
             return self.queryset.filter(branch=self.request.user.branch)
         return self.queryset
-
-class PaymentTypeListCreateView(ListCreateAPIView):
-    queryset = PaymentType.objects.all()
-    serializer_class = PaymentTypeSerializer
-    permission_classes = [IsAdminUser]
-
-    def perform_create(self, serializer):
-        serializer.save(
-            branch=self.request.user.branch
-        )
-
-    def get_queryset(self):
-        if self.request.user.is_authenticated:
-            return self.queryset.filter(branch=self.request.user.branch).order_by('-id')
-        return self.queryset.none()
-
-
-class PaymentTypeDetailView(RetrieveUpdateDestroyAPIView):
-    queryset = PaymentType.objects.all()
-    serializer_class = PaymentTypeSerializer
-    permission_classes = [IsAdminUser]
-
-    def get_queryset(self):
-        if self.request.user.is_authenticated:
-            return self.queryset.filter(branch=self.request.user.branch)
-        return self.queryset
-
 
 class ExpenseListCreateView(ListCreateAPIView):
     queryset = Expense.objects.all()

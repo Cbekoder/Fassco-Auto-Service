@@ -8,7 +8,7 @@ from users.models import Supplier, Client
 
 
 class Product(models.Model):
-    code = models.CharField(max_length=20, blank=False, null=False, verbose_name=_('Code'))
+    code = models.CharField(max_length=20, blank=True, null=True, verbose_name=_('Code'))
     name = models.CharField(max_length=255, verbose_name=_('Name'))
     amount = models.FloatField(default=0, validators=[MinValueValidator(0)],  verbose_name=_('Amount'))
     unit = models.CharField(max_length=50, blank=True, null=True, verbose_name=_('Unit'))

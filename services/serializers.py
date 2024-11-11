@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from django.db import transaction
 from rest_framework.exceptions import ValidationError
 from rest_framework.fields import SerializerMethodField
@@ -94,6 +96,8 @@ class OrderPostSerializer(ModelSerializer):
 class OrderListSerializer(ModelSerializer):
     services = OrderServiceSerializer(source='orderservice_set', many=True)
     products = OrderProductSerializer(source='orderproduct_set', many=True)
+    total_discount = SerializerMethodField()
+    qqs = SerializerMethodField()
     car = CarSerializer()
     manager = ManagerSerializer()
     branch = BranchBalanceSerializer()
@@ -106,9 +110,15 @@ class OrderListSerializer(ModelSerializer):
 
     class Meta:
         model = Order
-        fields = ['id', 'client', 'car', 'description', 'overall_total', 'total', 'paid', 'landing', 'odo_mileage', 'hev_mileage', 'ev_mileage',
+        fields = ['id', 'client', 'car', 'description', 'overall_total', 'qqs', 'total', 'total_discount', 'paid', 'landing', 'odo_mileage', 'hev_mileage', 'ev_mileage',
                   'branch', 'manager', 'start_date', 'end_date', 'plan_date', 'created_at', 'services', 'products']
         read_only_fields = ['client', 'branch', 'created_at']
+
+    def get_total_discount(self, obj):
+        return obj.overall_total - obj.total
+
+    def get_qqs(self, obj):
+        return obj.total_discount * Decimal(0.12)
 
     def get_client(self, obj):
         return Client.objects.get(id=obj.car.client.id)

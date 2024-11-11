@@ -52,22 +52,12 @@ class Debt(models.Model):
                 self.supplier.debt -= self.debt_amount
             self.supplier.save()
 
-class PaymentType(models.Model):
-    name = models.CharField(max_length=50, verbose_name=_('Name'))
-    branch = models.ForeignKey(Branch, on_delete=models.CASCADE, verbose_name=_('Branch'))
-
-    class Meta:
-        verbose_name = _('Payment Type')
-        verbose_name_plural = _('Payment Types')
-
-    def __str__(self):
-        return self.name
 
 class ImportList(models.Model):
     total = models.DecimalField(max_digits=15, decimal_places=0, verbose_name=_('Total'))
     paid = models.DecimalField(max_digits=15, decimal_places=0, verbose_name=_('Paid'))
     debt = models.DecimalField(max_digits=15, decimal_places=0, verbose_name=_('Debt'))
-    payment_type = models.ForeignKey(PaymentType, on_delete=models.SET_NULL, null=True, verbose_name=_('Payment Type'))
+    payment_type = models.CharField(max_length=30, null=True, verbose_name=_('Payment Type'))
     supplier = models.ForeignKey(Supplier, on_delete=models.CASCADE, verbose_name=_('Supplier'))
     description = models.TextField(null=True, blank=True, verbose_name=_('Description'))
 

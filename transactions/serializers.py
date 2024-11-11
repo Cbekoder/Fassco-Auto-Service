@@ -115,12 +115,6 @@ class ExpenseTypeSerializer(ModelSerializer):
         fields = ['id', 'name', 'branch']
         read_only_fields = ['id', 'branch']
 
-class PaymentTypeSerializer(ModelSerializer):
-    class Meta:
-        model = ExpenseType
-        fields = ['id', 'name', 'branch']
-        read_only_fields = ['id', 'branch']
-
 
 class ExpenseSerializer(ModelSerializer):
     class Meta:
