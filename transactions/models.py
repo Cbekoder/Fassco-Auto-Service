@@ -98,7 +98,7 @@ class ImportList(models.Model):
 class ImportProduct(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE, verbose_name=_('Product'))
     amount = models.FloatField(default=1, verbose_name=_('Debt'))
-    buy_price = models.DecimalField(max_digits=15, decimal_places=0,verbose_name=_('Buy price'))
+    arrival_price = models.DecimalField(max_digits=15, decimal_places=0,verbose_name=_('Arrival price'))
     sell_price = models.DecimalField(max_digits=15, decimal_places=0, verbose_name=_('Sell price'))
     total_summ = models.DecimalField(max_digits=15, decimal_places=0, verbose_name=_('Total summ'))
     import_list = models.ForeignKey(ImportList, on_delete=models.CASCADE, verbose_name=_('Import list'))
@@ -125,7 +125,7 @@ class ImportProduct(models.Model):
                     name = self.product.name,
                     amount = self.amount,
                     unit = self.product.unit,
-                    arrival_price = self.buy_price,
+                    arrival_price = self.arrival_price,
                     sell_price = self.sell_price,
                     min_amount = self.product.min_amount,
                     is_temp = False,
@@ -133,7 +133,7 @@ class ImportProduct(models.Model):
                     branch = self.product.branch
                 )
             else:
-                if float(self.product.sell_price) == float(self.sell_price) and float(self.product.arrival_price) == float(self.buy_price):
+                if float(self.product.sell_price) == float(self.sell_price) and float(self.product.arrival_price) == float(self.arrival_price):
                     self.product.amount += self.amount
                     self.product.save()
                 else:
@@ -142,14 +142,14 @@ class ImportProduct(models.Model):
                         name=self.product.name,
                         amount=self.amount,
                         unit=self.product.unit,
-                        arrival_price=self.buy_price,
+                        arrival_price=self.arrival_price,
                         sell_price=self.sell_price,
                         min_amount=self.product.min_amount,
                         is_temp=False,
                         supplier=self.import_list.supplier,
                         branch=self.product.branch
                     )
-            self.total_summ = self.buy_price * Decimal(self.amount)
+            self.total_summ = self.arrival_price * Decimal(self.amount)
             self.product = wareProduct
             super().save(*args, **kwargs)
 

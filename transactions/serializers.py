@@ -31,25 +31,25 @@ class ImportProductSerializer(ModelSerializer):
     total_summ = SerializerMethodField()
     class Meta:
         model = ImportProduct
-        fields = ['id', 'product', 'amount', 'buy_price', 'sell_price', 'total_summ']
+        fields = ['id', 'product', 'amount', 'arrival_price', 'sell_price', 'total_summ']
         read_only_fields = ['total_summ']
 
-    buy_price = DecimalField(max_digits=10, decimal_places=2, required=False)
+    arrival_price = DecimalField(max_digits=10, decimal_places=2, required=False)
 
     def get_total_summ(self, obj):
-        return Decimal(obj.amount) * obj.buy_price
+        return Decimal(obj.amount) * obj.arrival_price
 
 class ImportProductGetSerializer(ModelSerializer):
     product = ProductSerializer()
     total_summ = SerializerMethodField()
     class Meta:
         model = ImportProduct
-        fields = ['id', 'product', 'amount', 'buy_price', 'sell_price', 'total_summ']
+        fields = ['id', 'product', 'amount', 'arrival_price', 'sell_price', 'total_summ']
 
-    buy_price = DecimalField(max_digits=10, decimal_places=2, required=False)
+    arrival_price = DecimalField(max_digits=10, decimal_places=2, required=False)
 
     def get_total_summ(self, obj):
-        return Decimal(obj.amount) * obj.buy_price
+        return Decimal(obj.amount) * obj.arrival_price
 
 class ImportListSerializer(ModelSerializer):
     products = ImportProductSerializer(many=True)

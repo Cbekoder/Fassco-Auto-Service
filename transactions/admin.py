@@ -44,7 +44,7 @@ class ImportListAdmin(admin.ModelAdmin):
 
 @admin.register(ImportProduct)
 class ImportProductAdmin(admin.ModelAdmin):
-    list_display = ('product', 'amount', 'buy_price', 'total_summ', 'import_list')
+    list_display = ('product', 'amount', 'arrival_price', 'total_summ', 'import_list')
     search_fields = ('product__name', 'import_list__branch__name')
     list_filter = ('import_list__branch',)
 
