@@ -130,9 +130,9 @@ class OrderService(models.Model):
                         raise ValidationError({'detail': 'If discount_type is $, Discount must be between 1000 and service.price'})
 
             super().save(*args, **kwargs)
-
-            self.mechanic.balance += self.mechanic.kpi * Decimal(self.part)
-            self.mechanic.save()
+            if self.mechanic:
+                self.mechanic.balance += self.mechanic.kpi * Decimal(self.part)
+                self.mechanic.save()
 
             self.order.total += self.total
             self.order.service_total += self.total

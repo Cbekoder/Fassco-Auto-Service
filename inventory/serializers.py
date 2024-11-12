@@ -15,7 +15,7 @@ class ProductSerializer(ModelSerializer):
 
         return data
 
-class ProductPostSerializer(ModelSerializer):
+class ProductTempPostSerializer(ModelSerializer):
     class Meta:
         model = Product
         fields = ['id', 'code', 'name', 'min_amount', 'unit', 'created_at', 'updated_at']

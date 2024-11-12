@@ -23,6 +23,15 @@ class OrderServiceSerializer(ModelSerializer):
     discount = DecimalField(max_digits=15, decimal_places=0, required=False)
 
 
+class OrderServicePostSerializer(ModelSerializer):
+    class Meta:
+        model = OrderService
+        fields = ['id', 'service', 'total', 'part', 'discount_type', 'discount', 'mechanic', 'description']
+
+    total = DecimalField(max_digits=15, decimal_places=0, required=False)
+    discount = DecimalField(max_digits=15, decimal_places=0, required=False)
+
+
 
 class OrderProductSerializer(ModelSerializer):
     product = ProductSerializer()
@@ -43,9 +52,27 @@ class OrderProductSerializer(ModelSerializer):
             order_product = OrderProduct.objects.create(**validated_data)
             return order_product
 
+class OrderProductPostSerializer(ModelSerializer):
+    class Meta:
+        model = OrderProduct
+        fields = ['id', 'product', 'amount', 'total', 'discount_type', 'discount', 'description']
+
+    total = DecimalField(max_digits=15, decimal_places=0, required=False)
+    discount = DecimalField(max_digits=15, decimal_places=0, required=False)
+
+    def create(self, validated_data):
+        with transaction.atomic():
+            total = validated_data['total']
+            product = Product.objects.get(id=validated_data['product'])
+            calc_total = validated_data['amount'] * product.sell_price * (validated_data['discount'] / 100)
+            if total != calc_total:
+                validated_data['total'] = calc_total
+            order_product = OrderProduct.objects.create(**validated_data)
+            return order_product
+
 class OrderPostSerializer(ModelSerializer):
-    services = OrderServiceSerializer(many=True, required=False)
-    products = OrderProductSerializer(many=True, required=False)
+    services = OrderServicePostSerializer(many=True, required=False)
+    products = OrderProductPostSerializer(many=True, required=False)
 
     class Meta:
         model = Order
@@ -118,7 +145,7 @@ class OrderListSerializer(ModelSerializer):
         return obj.overall_total - obj.total
 
     def get_qqs(self, obj):
-        return obj.total_discount * Decimal(0.12)
+        return obj.total * Decimal(0.12)
 
     def get_client(self, obj):
         return Client.objects.get(id=obj.car.client.id)

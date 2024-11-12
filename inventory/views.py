@@ -1,40 +1,21 @@
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
-from rest_framework.generics import RetrieveUpdateDestroyAPIView, ListCreateAPIView, ListAPIView
+from rest_framework.generics import RetrieveUpdateDestroyAPIView, ListCreateAPIView, ListAPIView, RetrieveUpdateAPIView
 from rest_framework.permissions import IsAuthenticated
 from .models import Product, Service, Car
-from .serializers import ProductSerializer, ServiceSerializer, CarSerializer, ProductPostSerializer
+from django.db.models import F
+from .serializers import ProductSerializer, ServiceSerializer, CarSerializer, ProductTempPostSerializer
 from users.permissions import IsSameBranch, IsAdminUser
 
 
-class ProductListCreateView(ListCreateAPIView):
+class ProductListView(ListAPIView):
     queryset = Product.objects.all()
-    serializer_class = ProductPostSerializer
-    permission_classes = [IsAdminUser, IsSameBranch]
-
-    def get_serializer_class(self):
-        if self.request.method == 'POST':
-            return ProductPostSerializer
-        return ProductSerializer
-
-    def get_queryset(self):
-        if self.request.user.is_authenticated:
-            return self.queryset.filter(branch=self.request.user.branch, is_temp=False).order_by('-created_at')
-        return self.queryset.none()
-
-    def perform_create(self, serializer):
-        serializer.save(
-            branch=self.request.user.branch
-        )
-
-class TempProductListView(ListAPIView):
-    queryset = Product.objects.all()
-    serializer_class = ProductPostSerializer
+    serializer_class = ProductSerializer
     permission_classes = [IsAdminUser, IsSameBranch]
 
     def get_queryset(self):
         if self.request.user.is_authenticated:
-            return self.queryset.filter(branch=self.request.user.branch, is_temp=True).order_by('-created_at')
+            return self.queryset.filter(branch=self.request.user.branch, is_temp=False, amount__gt=0).order_by('-created_at')
         return self.queryset.none()
 
 class ProductRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
@@ -45,6 +26,46 @@ class ProductRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
     def get_queryset(self):
         if self.request.user.is_authenticated:
             return self.queryset.filter(branch=self.request.user.branch)
+        return self.queryset.none()
+
+
+class TempProductListView(ListCreateAPIView):
+    queryset = Product.objects.all()
+    serializer_class = ProductTempPostSerializer
+    permission_classes = [IsAdminUser, IsSameBranch]
+
+    def get_queryset(self):
+        if self.request.user.is_authenticated:
+            return self.queryset.filter(branch=self.request.user.branch, is_temp=True).order_by('-created_at')
+        return self.queryset.none()
+
+    def perform_create(self, serializer):
+        serializer.save(
+            branch=self.request.user.branch
+        )
+
+class TempProductUpdateView(RetrieveUpdateAPIView):
+    queryset = Product.objects.all()
+    serializer_class = ProductTempPostSerializer
+    permission_classes = [IsAdminUser, IsSameBranch]
+
+    def get_queryset(self):
+        if self.request.user.is_authenticated:
+            return self.queryset.filter(branch=self.request.user.branch, is_temp=True).order_by('-created_at')
+        return self.queryset.none()
+
+class OutOfProductListView(ListAPIView):
+    queryset = Product.objects.all()
+    serializer_class = ProductSerializer
+    permission_classes = [IsAdminUser, IsSameBranch]
+
+    def get_queryset(self):
+        if self.request.user.is_authenticated:
+            return self.queryset.filter(
+                branch=self.request.user.branch,
+                is_temp=False,
+                amount__lte=F('min_amount')
+            ).order_by('-created_at')
         return self.queryset.none()
 
 class ServiceListCreateView(ListCreateAPIView):
