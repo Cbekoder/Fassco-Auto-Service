@@ -13,7 +13,8 @@ from users.models import User, Employee, Supplier, Client
 
 
 class Debt(models.Model):
-    supplier = models.ForeignKey(Supplier, on_delete=models.CASCADE, verbose_name=_('Supplier'), related_name='from_supplier')
+    supplier = models.ForeignKey(Supplier, on_delete=models.CASCADE, verbose_name=_('Supplier'),
+                                 related_name='from_supplier')
     debt_amount = models.DecimalField(max_digits=15, decimal_places=0, verbose_name=_('Debt amount'))
     is_debt = models.BooleanField(default=False, verbose_name=_('Is debt'))
     current_debt = models.DecimalField(max_digits=15, decimal_places=0, verbose_name=_('Current debt'))
@@ -47,7 +48,7 @@ class Debt(models.Model):
                 wallet.balance += self.debt_amount
             else:
                 if self.supplier.debt < self.debt_amount:
-                    raise ValidationError({'detail':'Paying debt amount is greater than branch debt from supplier'})
+                    raise ValidationError({'detail': 'Paying debt amount is greater than branch debt from supplier'})
                 wallet.balance -= self.debt_amount
                 self.supplier.debt -= self.debt_amount
             self.supplier.save()
@@ -95,10 +96,11 @@ class ImportList(models.Model):
     #         # Now delete the ImportListProductt instance
     #         super().delete(*args, **kwargs)
 
+
 class ImportProduct(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE, verbose_name=_('Product'))
     amount = models.FloatField(default=1, verbose_name=_('Debt'))
-    arrival_price = models.DecimalField(max_digits=15, decimal_places=0,verbose_name=_('Arrival price'))
+    arrival_price = models.DecimalField(max_digits=15, decimal_places=0, verbose_name=_('Arrival price'))
     sell_price = models.DecimalField(max_digits=15, decimal_places=0, verbose_name=_('Sell price'))
     total_summ = models.DecimalField(max_digits=15, decimal_places=0, verbose_name=_('Total summ'))
     import_list = models.ForeignKey(ImportList, on_delete=models.CASCADE, verbose_name=_('Import list'))
@@ -119,38 +121,27 @@ class ImportProduct(models.Model):
                 self.product.amount -= old_amount
                 self.import_list.total -= old_total_summ
 
-            if self.product.is_temp:
-                wareProduct = Product.objects.create(
-                    code = self.product.code,
-                    name = self.product.name,
-                    amount = self.amount,
-                    unit = self.product.unit,
-                    arrival_price = self.arrival_price,
-                    sell_price = self.sell_price,
-                    min_amount = self.product.min_amount,
-                    is_temp = False,
-                    supplier = self.import_list.supplier,
-                    branch = self.product.branch
-                )
+            available = Product.objects.filter(name=self.product.name, sell_price=self.sell_price, arrival_price=self.arrival_price)
+            if available:
+                wareProduct = available.last()
+                wareProduct.amount += self.amount
+                wareProduct.save()
             else:
-                if float(self.product.sell_price) == float(self.sell_price) and float(self.product.arrival_price) == float(self.arrival_price):
-                    self.product.amount += self.amount
-                    self.product.save()
-                else:
-                    wareProduct = Product.objects.create(
-                        code=self.product.code,
-                        name=self.product.name,
-                        amount=self.amount,
-                        unit=self.product.unit,
-                        arrival_price=self.arrival_price,
-                        sell_price=self.sell_price,
-                        min_amount=self.product.min_amount,
-                        is_temp=False,
-                        supplier=self.import_list.supplier,
-                        branch=self.product.branch
-                    )
+                wareProduct = Product.objects.create(
+                    code=self.product.code,
+                    name=self.product.name,
+                    amount=self.amount,
+                    unit=self.product.unit,
+                    arrival_price=self.arrival_price,
+                    sell_price=self.sell_price,
+                    min_amount=self.product.min_amount,
+                    is_temp=False,
+                    supplier=self.import_list.supplier,
+                    branch=self.product.branch
+                )
+                self.product = wareProduct
+
             self.total_summ = self.arrival_price * Decimal(self.amount)
-            self.product = wareProduct
             super().save(*args, **kwargs)
 
             self.import_list.total += self.total_summ
@@ -182,8 +173,6 @@ class BranchFundTransfer(models.Model):
                 self.branch.save()
             else:
                 raise ValidationError({"detail": "Branch fund is less than 0"})
-
-
 
 
 class ExpenseType(models.Model):
@@ -235,7 +224,8 @@ class Expense(models.Model):
 
 
 class Salary(models.Model):
-    employee = models.ForeignKey(Employee, on_delete=models.CASCADE, verbose_name=_('Employee'), related_name='for_employee')
+    employee = models.ForeignKey(Employee, on_delete=models.CASCADE, verbose_name=_('Employee'),
+                                 related_name='for_employee')
     description = models.TextField(null=True, blank=True, verbose_name=_('Description'))
     amount = models.DecimalField(max_digits=15, decimal_places=0, verbose_name=_('Amount'))
     from_user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name=_('User'))
@@ -288,8 +278,6 @@ class Salary(models.Model):
             super(Salary, self).delete(*args, **kwargs)
 
 
-
-
 class Lending(models.Model):
     client = models.ForeignKey(Client, on_delete=models.CASCADE, verbose_name=_('Client'), related_name="from_client")
     lending_amount = models.DecimalField(max_digits=15, decimal_places=0, verbose_name=_('Lending amount'))
@@ -305,7 +293,6 @@ class Lending(models.Model):
 
     def __str__(self):
         return f"{self.client.first_name} - {self.lending_amount}"
-
 
     def save(self, *args, **kwargs):
         with transaction.atomic():
@@ -345,6 +332,3 @@ class Lending(models.Model):
             self.client.save()
 
             super(Lending, self).delete(*args, **kwargs)
-
-
-
