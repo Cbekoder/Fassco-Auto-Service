@@ -2,6 +2,7 @@ from decimal import Decimal
 from django.db import models, transaction
 from django.utils.translation import gettext_lazy as _
 from rest_framework.exceptions import ValidationError
+from django.utils import timezone
 
 from users.models import Employee, Client
 from inventory.models import Branch, Car, Service, Product
@@ -22,9 +23,9 @@ class Order(models.Model):
     hev_mileage = models.FloatField(blank=True, null=True, verbose_name=_('HEV mileage'))
     ev_mileage = models.FloatField(blank=True, null=True, verbose_name=_('EV mileage'))
 
-    start_date = models.DateField(auto_now=True, verbose_name=_('Start date'))
-    end_date = models.DateField(auto_now=True, verbose_name=_('End date'))
-    plan_date = models.DateField(auto_now=True, verbose_name=_('Plan date'))
+    start_date = models.DateField(null=True, verbose_name=_('Start date'))
+    end_date = models.DateField(null=True, verbose_name=_('End date'))
+    plan_date = models.DateField(null=True, verbose_name=_('Plan date'))
 
     branch = models.ForeignKey(Branch, on_delete=models.CASCADE, verbose_name=_('Branch'))
     manager = models.ForeignKey(Employee, on_delete=models.SET_NULL, null=True, verbose_name=_('Manager'))
@@ -47,6 +48,15 @@ class Order(models.Model):
             #     old_instance = Order.objects.get(pk=self.pk)
             #     self.car.client.lending -= old_instance.landing
             #     self.branch.balance -= old_instance.paid
+
+            today = timezone.now().date()
+            if not self.start_date:
+                self.start_date = today
+            if not self.plan_date:
+                self.plan_date = today
+            if not self.end_date:
+                self.end_date = self.start_date
+            super().save(*args, **kwargs)
 
             super().save(*args, **kwargs)
 
