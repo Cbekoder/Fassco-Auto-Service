@@ -1,5 +1,6 @@
 from rest_framework.serializers import ModelSerializer, ValidationError
 from .models import Product, Service, Car
+from rest_framework import serializers
 
 
 class ProductSerializer(ModelSerializer):
@@ -26,6 +27,12 @@ class ProductImportDetailSerializer(ModelSerializer):
     class Meta:
         model = Product
         fields = ['id', 'code', 'name', 'amount', 'unit', 'arrival_price']
+
+class ProductImportNameSerializer(ModelSerializer):
+    id = serializers.IntegerField(required=False)
+    class Meta:
+        model = Product
+        fields = ['id', 'name']
 
 class ServiceSerializer(ModelSerializer):
     class Meta:

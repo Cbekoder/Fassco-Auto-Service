@@ -4,7 +4,7 @@ from django.db import transaction
 from rest_framework.exceptions import ValidationError
 from rest_framework.fields import SerializerMethodField
 from rest_framework.serializers import ModelSerializer, DecimalField
-from inventory.serializers import ProductImportDetailSerializer, ProductSerializer
+from inventory.serializers import ProductImportDetailSerializer, ProductSerializer, ProductImportNameSerializer
 from .models import ExpenseType, Expense, Salary, ImportList, ImportProduct, Debt, BranchFundTransfer, Lending
 
 
@@ -28,6 +28,7 @@ class GetPayDebtSerializer(ModelSerializer):
 
 
 class ImportProductSerializer(ModelSerializer):
+    product = ProductImportNameSerializer()
     total_summ = SerializerMethodField()
     class Meta:
         model = ImportProduct
@@ -45,7 +46,6 @@ class ImportProductGetSerializer(ModelSerializer):
     class Meta:
         model = ImportProduct
         fields = ['id', 'product', 'amount', 'arrival_price', 'sell_price', 'total_summ']
-
     arrival_price = DecimalField(max_digits=10, decimal_places=2, required=False)
 
     def get_total_summ(self, obj):
