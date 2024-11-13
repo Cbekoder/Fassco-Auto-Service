@@ -140,7 +140,6 @@ class ImportProduct(models.Model):
                     branch=self.product.branch
                 )
                 self.product = wareProduct
-
             self.total_summ = self.arrival_price * Decimal(self.amount)
             super().save(*args, **kwargs)
 

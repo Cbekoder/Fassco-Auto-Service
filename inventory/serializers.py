@@ -29,7 +29,7 @@ class ProductImportDetailSerializer(ModelSerializer):
         fields = ['id', 'code', 'name', 'amount', 'unit', 'arrival_price']
 
 class ProductImportNameSerializer(ModelSerializer):
-    id = serializers.IntegerField(required=False)
+    id = serializers.PrimaryKeyRelatedField(queryset=Product.objects.all())
     class Meta:
         model = Product
         fields = ['id', 'name']

@@ -1,9 +1,12 @@
 from decimal import Decimal
 
 from django.db import transaction
+from django.shortcuts import get_object_or_404
 from rest_framework.exceptions import ValidationError
 from rest_framework.fields import SerializerMethodField
 from rest_framework.serializers import ModelSerializer, DecimalField
+
+from inventory.models import Product
 from inventory.serializers import ProductImportDetailSerializer, ProductSerializer, ProductImportNameSerializer
 from .models import ExpenseType, Expense, Salary, ImportList, ImportProduct, Debt, BranchFundTransfer, Lending
 
@@ -65,9 +68,11 @@ class ImportListSerializer(ModelSerializer):
             import_list = ImportList.objects.create(**validated_data, total=0, debt=0)
             products_list = []
             for product_data in products_data:
-                pro_cr = ImportProduct.objects.create(import_list=import_list, **product_data)
+                product = product_data['product']['id']
+                product_data.pop('product')
+                pro_cr = ImportProduct.objects.create(import_list=import_list, product=product, **product_data)
+                print(pro_cr)
                 products_list.append(pro_cr)
-
             import_list.debt = import_list.total - import_list.paid
             import_list.save()
             import_list.products = products_list
