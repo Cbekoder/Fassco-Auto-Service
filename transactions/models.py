@@ -248,18 +248,9 @@ class Salary(models.Model):
                 wallet.balance += old_amount
                 self.employee.balance += old_amount
             super().save(*args, **kwargs)
-            if self.employee.position == "manager":
-                if self.employee.balance >= self.amount:
-                    wallet.balance -= self.amount
-                    self.employee.balance -= self.amount
-                else:
-                    raise ValidationError({'detail': 'Not enough balance to spend salary amount'})
-            elif self.employee.position == "other":
-                wallet.balance -= self.amount
-                self.employee.balance -= self.amount - self.employee.salary
-            elif self.employee.position == 'mechanic':
-                wallet.balance -= self.amount
-                self.employee.balance -= self.amount
+
+            wallet.balance -= self.amount
+            self.employee.balance -= self.amount
 
             self.employee.save()
             wallet.save()
