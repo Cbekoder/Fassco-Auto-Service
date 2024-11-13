@@ -1,10 +1,11 @@
 from django.urls import path
 from .views import ProductListView, ProductRetrieveUpdateDestroyView, ServiceListCreateView, \
     ServiceRetrieveUpdateDestroyView, CarListCreateView, CarRetrieveUpdateDestroyView, TempProductListView, \
-    TempProductUpdateView, OutOfProductListView
+    TempProductUpdateView, OutOfProductListView, AllProductsListView
 
 urlpatterns = [
     path('products/', ProductListView.as_view(), name='product-list-create'),
+    path('all-products/', AllProductsListView.as_view(), name='all-product-list'),
     path('products-out/', OutOfProductListView.as_view(), name='product-list-create'),
     path('product/<int:pk>/', ProductRetrieveUpdateDestroyView.as_view(), name='product-detail'),
     path('product-temps/', TempProductListView.as_view(), name='product-list-temp'),

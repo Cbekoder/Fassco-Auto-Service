@@ -68,6 +68,15 @@ class OutOfProductListView(ListAPIView):
             ).order_by('-created_at')
         return self.queryset.none()
 
+class AllProductsListView(ListAPIView):
+    queryset = Product.objects.all()
+    serializer_class = ProductSerializer
+    permission_classes = [IsAdminUser, IsSameBranch]
+    def get_queryset(self):
+        if self.request.user.is_authenticated:
+            return self.queryset.filter(branch=self.request.user.branch, is_temp=False).order_by('-created_at')
+        return self.queryset.none()
+
 class ServiceListCreateView(ListCreateAPIView):
     queryset = Service.objects.all()
     serializer_class = ServiceSerializer
