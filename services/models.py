@@ -56,7 +56,6 @@ class Order(models.Model):
                 self.plan_date = today
             if not self.end_date:
                 self.end_date = self.start_date
-            super().save(*args, **kwargs)
 
             super().save(*args, **kwargs)
 

@@ -71,7 +71,6 @@ class ImportListSerializer(ModelSerializer):
                 product = product_data['product']['id']
                 product_data.pop('product')
                 pro_cr = ImportProduct.objects.create(import_list=import_list, product=product, **product_data)
-                print(pro_cr)
                 products_list.append(pro_cr)
             import_list.debt = import_list.total - import_list.paid
             import_list.save()
