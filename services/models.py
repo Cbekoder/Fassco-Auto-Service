@@ -212,7 +212,7 @@ class OrderProduct(models.Model):
 
             super().save(*args, **kwargs)
 
-            manager.balance += Decimal(manager.commission_per / 100) * Decimal(self.amount) * (self.product.sell_price - self.product.arrival_price)
+            manager.balance += Decimal(manager.commission_per / 100) * Decimal(self.amount) * self.product.sell_price
             manager.save()
 
             self.order.total += self.total
