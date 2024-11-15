@@ -25,7 +25,7 @@ urlpatterns = [
     path('expense/<int:pk>/', ExpenseDetailView.as_view(), name='expense-detail'),
     path('salaries/', SalaryListCreateView.as_view(), name='salary-list-create'),
     path('salary/<int:pk>/', SalaryDetailView.as_view(), name='salary-detail'),
-    path('statistics/<str:duration>/', DetailedBranchStatisticsView.as_view(), name='statistics'),
-    path('statistics/<str:duration>/<str:start_date>/<str:end_date>/', DetailedBranchStatisticsView.as_view(), name='statistics'),
+    path('statistics/<int:year>/<int:month>/<int:day>/', DetailedBranchStatisticsView.as_view(), name='statistics-day'),
+    path('statistics/<int:year>/<int:month>/', DetailedBranchStatisticsView.as_view(), name='statistics'),
 ]
 

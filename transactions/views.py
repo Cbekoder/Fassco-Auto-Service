@@ -334,33 +334,33 @@ class SalaryDetailView(RetrieveUpdateDestroyAPIView):
 class DetailedBranchStatisticsView(APIView):
     permission_classes = [IsAdminUser]
 
-    def get(self, request, duration, start_date=None, end_date=None):
-        if duration == "custom":
-            if not start_date or not end_date:
-                return Response({"error": "Both start_date and end_date are required when duration is 'custom'."},
-                                status=400)
-            try:
-                start_date = timezone.make_aware(datetime.strptime(start_date, "%Y-%m-%d")).replace(hour=0, minute=0,
-                                                                                                    second=0)
-                end_date = timezone.make_aware(datetime.strptime(end_date, "%Y-%m-%d")).replace(hour=23, minute=59,
-                                                                                                second=59)
-            except ValueError:
-                return Response({"error": "Invalid date format. Use YYYY-MM-DD."}, status=400)
-        else:
+    def get(self, request, year=None, month=None, day=None):
 
-            if duration == "weekly":
-                start_date = timezone.now() - timedelta(weeks=1)
-            elif duration == "monthly":
-                start_date = timezone.now() - timedelta(days=30)
+        try:
+            if year and month and day:
+                # Exact day statistics
+                start_date = timezone.make_aware(datetime(year, month, day, 0, 0, 0))
+                end_date = start_date + timedelta(days=1) - timedelta(seconds=1)
+                duration = "daily"
+            elif year and month:
+                # Monthly statistics
+                start_date = timezone.make_aware(datetime(year, month, 1, 0, 0, 0))
+                if month == 12:
+                    end_date = timezone.make_aware(datetime(year + 1, 1, 1, 0, 0, 0)) - timedelta(seconds=1)
+                else:
+                    end_date = timezone.make_aware(datetime(year, month + 1, 1, 0, 0, 0)) - timedelta(seconds=1)
+                duration = "monthly"
             else:
-                start_date = timezone.now() - timedelta(days=1)
-            end_date = timezone.now()
+                return Response({"error": "Year and month are required parameters."}, status=400)
+        except ValueError:
+            return Response({"error": "Invalid date format."}, status=400)
 
-        orders = Order.objects.filter(branch=self.request.user.branch, created_at__range=[start_date, end_date])
+        # Original calculations remain unchanged
+        orders = Order.objects.filter(branch=request.user.branch, created_at__range=[start_date, end_date])
         order_income_details = orders.values("client__first_name").annotate(total_paid=Sum("paid"))
         order_income_total = orders.aggregate(total=Sum("paid"))["total"] or 0
 
-        lendings = Lending.objects.filter(branch=self.request.user.branch, created_at__range=[start_date, end_date], is_lending=False)
+        lendings = Lending.objects.filter(branch=request.user.branch, created_at__range=[start_date, end_date], is_lending=False)
         lending_income_details = lendings.values("client__first_name").annotate(total_lending=Sum("lending_amount"))
         lending_income_total = lendings.aggregate(total=Sum("lending_amount"))["total"] or 0
 
@@ -376,27 +376,15 @@ class DetailedBranchStatisticsView(APIView):
             "total_income": order_income_total + lending_income_total
         }
 
-        # import_expenses = ImportList.objects.filter(branch=self.request.user.branch, created_at__range=[start_date, end_date])
-        # import_expense_details = import_expenses.values("supplier__first_name").annotate(total_paid=Sum("paid"))
-        # import_outcome_total = import_expenses.aggregate(total=Sum("paid"))["total"] or 0
-
-        expenses = Expense.objects.filter(branch=self.request.user.branch, created_at__range=[start_date, end_date])
+        expenses = Expense.objects.filter(branch=request.user.branch, created_at__range=[start_date, end_date])
         general_expense_details = expenses.values("type__name").annotate(total_amount=Sum("amount"))
         general_expense_total = expenses.aggregate(total=Sum("amount"))["total"] or 0
 
-        salaries = Salary.objects.filter(branch=self.request.user.branch, created_at__range=[start_date, end_date])
+        salaries = Salary.objects.filter(branch=request.user.branch, created_at__range=[start_date, end_date])
         salary_details = salaries.values("employee__first_name").annotate(total_amount=Sum("amount"))
         salary_outcome_total = salaries.aggregate(total=Sum("amount"))["total"] or 0
 
-        # debts = Debt.objects.filter(branch=self.request.user.branch, created_at__range=[start_date, end_date], is_debt=False)
-        # debt_details = debts.values("supplier__first_name").annotate(total_debt=Sum("debt_amount"))
-        # debt_outcome_total = debts.aggregate(total=Sum("debt_amount"))["total"] or 0
-
         outcomes = {
-            # "import_payments": {
-            #     "total": import_outcome_total,
-            #     "details": list(import_expense_details)
-            # },
             "general_expenses": {
                 "total": general_expense_total,
                 "details": list(general_expense_details)
@@ -405,26 +393,23 @@ class DetailedBranchStatisticsView(APIView):
                 "total": salary_outcome_total,
                 "details": list(salary_details)
             },
-            # "supplier_debts": {
-            #     "total": debt_outcome_total,
-            #     "details": list(debt_details)
-            # },
-            # "total_outcome": import_outcome_total + general_expense_total + salary_outcome_total + debt_outcome_total
             "total_outcome": general_expense_total + salary_outcome_total
         }
 
         net_income = incomes["total_income"] - outcomes["total_outcome"]
 
+        formatted_start_date = start_date.strftime("%d-%m-%Y")
+        formatted_end_date = end_date.strftime("%d-%m-%Y")
+
         data = {
-            "branch_id": self.request.user.branch.id,
+            "branch_id": request.user.branch.id,
             "duration": duration,
-            "start_date": start_date,
-            "end_date": end_date,
+            "start_date": formatted_start_date,
+            "end_date": formatted_end_date,
             "incomes": incomes,
             "outcomes": outcomes,
             "net_income": net_income
         }
 
         return Response(data)
-
 
