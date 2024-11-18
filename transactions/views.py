@@ -338,12 +338,10 @@ class DetailedBranchStatisticsView(APIView):
 
         try:
             if year and month and day:
-                # Exact day statistics
                 start_date = timezone.make_aware(datetime(year, month, day, 0, 0, 0))
                 end_date = start_date + timedelta(days=1) - timedelta(seconds=1)
                 duration = "daily"
             elif year and month:
-                # Monthly statistics
                 start_date = timezone.make_aware(datetime(year, month, 1, 0, 0, 0))
                 if month == 12:
                     end_date = timezone.make_aware(datetime(year + 1, 1, 1, 0, 0, 0)) - timedelta(seconds=1)
@@ -355,7 +353,6 @@ class DetailedBranchStatisticsView(APIView):
         except ValueError:
             return Response({"error": "Invalid date format."}, status=400)
 
-        # Original calculations remain unchanged
         orders = Order.objects.filter(branch=request.user.branch, created_at__range=[start_date, end_date])
         order_income_details = orders.values("client__first_name").annotate(total_paid=Sum("paid"))
         order_income_total = orders.aggregate(total=Sum("paid"))["total"] or 0
@@ -380,20 +377,21 @@ class DetailedBranchStatisticsView(APIView):
         general_expense_details = expenses.values("type__name").annotate(total_amount=Sum("amount"))
         general_expense_total = expenses.aggregate(total=Sum("amount"))["total"] or 0
 
-        salaries = Salary.objects.filter(branch=request.user.branch, created_at__range=[start_date, end_date])
-        salary_details = salaries.values("employee__first_name").annotate(total_amount=Sum("amount"))
-        salary_outcome_total = salaries.aggregate(total=Sum("amount"))["total"] or 0
+        # salaries = Salary.objects.filter(branch=request.user.branch, created_at__range=[start_date, end_date])
+        # salary_details = salaries.values("employee__first_name").annotate(total_amount=Sum("amount"))
+        # salary_outcome_total = salaries.aggregate(total=Sum("amount"))["total"] or 0
 
         outcomes = {
-            "general_expenses": {
+            "expenses": {
                 "total": general_expense_total,
                 "details": list(general_expense_details)
             },
-            "salaries": {
-                "total": salary_outcome_total,
-                "details": list(salary_details)
-            },
-            "total_outcome": general_expense_total + salary_outcome_total
+            # "salaries": {
+            #     "total": salary_outcome_total,
+            #     "details": list(salary_details)
+            # },
+            # "total_outcome": general_expense_total + salary_outcome_total
+            "total_outcome": general_expense_total
         }
 
         net_income = incomes["total_income"] - outcomes["total_outcome"]
