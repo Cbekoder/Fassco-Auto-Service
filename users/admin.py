@@ -8,8 +8,7 @@ site.unregister(Group)
 
 @register(User)
 class UserAdmin(UserAdmin):
-    list_display = ('username', 'branch', 'is_staff', 'is_active')
-
+    list_display = ('username', 'full_name', 'branch', 'is_staff', 'is_active')
     search_fields = ('username', 'branch__name')
 
     list_filter = ('is_staff', 'is_superuser', 'is_active', 'branch')
@@ -35,6 +34,7 @@ class UserAdmin(UserAdmin):
 @register(Employee)
 class EmployeeAdmin(ModelAdmin):
     list_display = ('first_name', 'last_name', 'balance', 'position', 'branch', 'commission_per', 'salary', 'kpi')
+    list_display_links = ('first_name', 'last_name')
     search_fields = ('first_name', 'last_name', 'branch__name', 'position')
     list_filter = ('branch', 'position')
 

@@ -13,6 +13,10 @@ class User(AbstractUser):
     def __str__(self):
         return self.username
 
+    @property
+    def full_name(self):
+        return f"{self.first_name} {self.last_name}".strip()
+
 
 class UserTemp(models.Model):
     first_name = models.CharField(max_length=50)
@@ -21,6 +25,10 @@ class UserTemp(models.Model):
     address = models.TextField(null=True, blank=True)
 
     branch = models.ForeignKey(Branch, on_delete=models.CASCADE)
+
+    @property
+    def full_name(self):
+        return f"{self.first_name} {self.last_name}".strip()
 
 
 class Supplier(UserTemp):

@@ -55,12 +55,13 @@ class Debt(models.Model):
 
 
 class ImportList(models.Model):
-    total = models.DecimalField(max_digits=15, decimal_places=0, verbose_name=_('Total'))
-    paid = models.DecimalField(max_digits=15, decimal_places=0, verbose_name=_('Paid'))
-    debt = models.DecimalField(max_digits=15, decimal_places=0, verbose_name=_('Debt'))
-    payment_type = models.CharField(max_length=30, null=True, verbose_name=_('Payment Type'))
-    supplier = models.ForeignKey(Supplier, on_delete=models.CASCADE, verbose_name=_('Supplier'))
+    total = models.DecimalField(max_digits=15, decimal_places=0, null=True, blank=True, verbose_name=_('Total'))
+    paid = models.DecimalField(max_digits=15, decimal_places=0, null=True, blank=True, verbose_name=_('Paid'))
+    debt = models.DecimalField(max_digits=15, decimal_places=0, null=True, blank=True, verbose_name=_('Debt'))
+    payment_type = models.CharField(max_length=30, null=True, blank=True, verbose_name=_('Payment Type'))
+    supplier = models.ForeignKey(Supplier, on_delete=models.CASCADE, null=True, blank=True, verbose_name=_('Supplier'))
     description = models.TextField(null=True, blank=True, verbose_name=_('Description'))
+    is_initial_stock = models.BooleanField(default=False, verbose_name=_('Is Initial Stock'))
 
     created_at = models.DateTimeField(auto_now_add=True, verbose_name=_('Created at'))
     branch = models.ForeignKey(Branch, on_delete=models.CASCADE, verbose_name=_('Branch'))
@@ -74,19 +75,27 @@ class ImportList(models.Model):
 
     def save(self, *args, **kwargs):
         with transaction.atomic():
-            wallet = Wallet.objects.last()
-            if self.pk:
-                old_instance = ImportList.objects.get(pk=self.pk)
-                self.supplier.debt -= old_instance.debt
-                wallet.balance += old_instance.paid
+            if self.is_initial_stock:
+                self.paid = self.debt = self.payment_type = None
+                super().save(*args, **kwargs)
+            else:
+                if self.payment_type == "0":
+                    super().save(*args, **kwargs)
+                else:
+                    wallet = Wallet.objects.last()
+                    if self.pk:
+                        old_instance = ImportList.objects.get(pk=self.pk)
+                        self.supplier.debt -= old_instance.debt
+                        wallet.balance += old_instance.paid
 
-            super().save(*args, **kwargs)
+                    super().save(*args, **kwargs)
 
-            self.supplier.debt += self.debt
-            wallet.balance -= self.paid
+                    self.supplier.debt += self.debt
+                    wallet.balance -= self.paid
 
-            wallet.save()
-            self.supplier.save()
+                    wallet.save()
+                    self.supplier.save()
+
 
     # def delete(self, *args, **kwargs):
     #     with transaction.atomic():
@@ -102,7 +111,7 @@ class ImportProduct(models.Model):
     amount = models.FloatField(default=1, verbose_name=_('Debt'))
     arrival_price = models.DecimalField(max_digits=15, decimal_places=0, verbose_name=_('Arrival price'))
     sell_price = models.DecimalField(max_digits=15, decimal_places=0, verbose_name=_('Sell price'))
-    total_summ = models.DecimalField(max_digits=15, decimal_places=0, verbose_name=_('Total summ'))
+    total_summ = models.DecimalField(max_digits=15, null=True, decimal_places=0, verbose_name=_('Total summ'))
     import_list = models.ForeignKey(ImportList, on_delete=models.CASCADE, verbose_name=_('Import list'))
 
     class Meta:
@@ -121,10 +130,12 @@ class ImportProduct(models.Model):
                 self.product.amount -= old_amount
                 self.import_list.total -= old_total_summ
 
-            available = Product.objects.filter(name=self.product.name, sell_price=self.sell_price, arrival_price=self.arrival_price)
+            available = Product.objects.filter(name=self.product.name, is_temp=False)
             if available:
                 wareProduct = available.last()
                 wareProduct.amount += self.amount
+                wareProduct.arrival_price = self.arrival_price
+                wareProduct.sell_price = self.sell_price
                 wareProduct.save()
             else:
                 wareProduct = Product.objects.create(
@@ -137,7 +148,7 @@ class ImportProduct(models.Model):
                     min_amount=self.product.min_amount,
                     is_temp=False,
                     supplier=self.import_list.supplier,
-                    branch=self.product.branch
+                    branch=self.import_list.branch
                 )
                 self.product = wareProduct
             self.total_summ = self.arrival_price * Decimal(self.amount)
