@@ -90,8 +90,8 @@ class OrderPostSerializer(ModelSerializer):
             services_data = validated_data.pop('services')
             products_data = validated_data.pop('products')
 
-            if products_data and not validated_data['manager']:
-                raise ValidationError({'detail': "If product is exist, Manager is required"})
+            # if products_data and not validated_data['manager']:
+            #     raise ValidationError({'detail': "If product is exist, Manager is required"})
 
             car = validated_data.get('car')
 

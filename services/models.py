@@ -28,7 +28,7 @@ class Order(models.Model):
     plan_date = models.DateField(null=True, verbose_name=_('Plan date'))
 
     branch = models.ForeignKey(Branch, on_delete=models.CASCADE, verbose_name=_('Branch'))
-    manager = models.ForeignKey(Employee, on_delete=models.SET_NULL, null=True, verbose_name=_('Manager'))
+    manager = models.ForeignKey(Employee, on_delete=models.SET_NULL, null=True, blank=True, verbose_name=_('Manager'))
 
     created_at = models.DateTimeField(auto_now_add=True, verbose_name=_('Created at'))
 
@@ -181,7 +181,6 @@ class OrderProduct(models.Model):
 
     def save(self, *args, **kwargs):
         with transaction.atomic():
-            manager = self.order.manager
             # if self.pk:
             #     old_instance = OrderProduct.objects.get(pk=self.pk)
             #
@@ -211,9 +210,10 @@ class OrderProduct(models.Model):
                         raise ValidationError({"detail": "Discount amount must be from 0 to product sell price if discout type is $"})
 
             super().save(*args, **kwargs)
-
-            manager.balance += Decimal(manager.commission_per / 100) * Decimal(self.amount) * self.product.sell_price
-            manager.save()
+            if self.order.manager:
+                manager = self.order.manager
+                manager.balance += Decimal(manager.commission_per / 100) * Decimal(self.amount) * self.product.sell_price
+                manager.save()
 
             self.order.total += self.total
             self.order.product_total += self.total
@@ -232,10 +232,11 @@ class OrderProduct(models.Model):
             self.product.amount += self.amount
             self.product.save()
 
-            manager = self.order.manager
-            manager.balance -= Decimal(manager.commission_per / 100) * Decimal(self.amount) * (
-                    self.product.sell_price - self.product.arrival_price)
-            manager.save()
+            if self.order.manager:
+                manager = self.order.manager
+                manager.balance -= Decimal(manager.commission_per / 100) * Decimal(self.amount) * (
+                        self.product.sell_price - self.product.arrival_price)
+                manager.save()
 
             if self.order:
                 self.order.total -= self.total
