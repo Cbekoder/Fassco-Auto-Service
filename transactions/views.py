@@ -12,11 +12,11 @@ from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIV
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from django.db.models import Sum, Q, F, DecimalField
+from django.db.models import Sum, Case, When, F, DecimalField, Value
 
 from branches.models import Wallet
 from inventory.models import Product
-from services.models import Order
+from services.models import Order, OrderProduct, OrderService
 from users.models import Supplier
 from users.permissions import IsAdminUser
 from .models import ExpenseType, Expense, Salary, ImportList, ImportProduct, Debt, BranchFundTransfer, Lending
@@ -46,6 +46,7 @@ class GetDebtCreateView(CreateAPIView):
             current_debt=current_debt,
         )
 
+
 class PayDebtCreateView(CreateAPIView):
     queryset = Debt.objects.all()
     serializer_class = GetPayDebtSerializer
@@ -61,6 +62,7 @@ class PayDebtCreateView(CreateAPIView):
             is_debt=False,
             current_debt=current_debt,
         )
+
 
 class DebtListView(ListAPIView):
     queryset = Debt.objects.all()
@@ -94,6 +96,7 @@ class DebtListView(ListAPIView):
             return queryset
         return self.queryset.none()
 
+
 class DebtDetailView(RetrieveUpdateDestroyAPIView):
     queryset = Debt.objects.all()
     serializer_class = DebtUpdateSerializer
@@ -103,6 +106,7 @@ class DebtDetailView(RetrieveUpdateDestroyAPIView):
         if self.request.user.is_authenticated:
             return self.queryset.filter(branch=self.request.user.branch)
         return self.queryset.none()
+
 
 class ExpenseTypeListCreateView(ListCreateAPIView):
     queryset = ExpenseType.objects.all()
@@ -130,6 +134,7 @@ class ExpenseTypeDetailView(RetrieveUpdateDestroyAPIView):
             return self.queryset.filter(branch=self.request.user.branch)
         return self.queryset
 
+
 class ExpenseListCreateView(ListCreateAPIView):
     queryset = Expense.objects.all()
     serializer_class = ExpenseSerializer
@@ -142,7 +147,7 @@ class ExpenseListCreateView(ListCreateAPIView):
 
     def perform_create(self, serializer):
         serializer.save(
-            from_user = self.request.user,
+            from_user=self.request.user,
             branch=self.request.user.branch
         )
 
@@ -170,6 +175,7 @@ class ImportCreateView(APIView):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
 class ImportListAPIView(ListAPIView):
     queryset = ImportList.objects.all()
     serializer_class = ImportListSerializer
@@ -184,6 +190,7 @@ class ImportListAPIView(ListAPIView):
         if self.request.method == 'GET':
             return GetImportListSerializer
         return ImportListSerializer
+
 
 class ImportListDetailAPIView(RetrieveUpdateDestroyAPIView):
     queryset = ImportList.objects.all()
@@ -235,7 +242,7 @@ class GiveLendingCreateView(CreateAPIView):
         current_lending = client.lending + lending_amount
         serializer.save(
             branch=branch,
-            is_lending = True,
+            is_lending=True,
             current_lending=current_lending
         )
 
@@ -243,6 +250,7 @@ class GiveLendingCreateView(CreateAPIView):
         if self.request.user.is_authenticated:
             return self.queryset.filter(branch=self.request.user.branch)
         return self.queryset.none()
+
 
 class PayLendingCreateView(CreateAPIView):
     queryset = Lending.objects.all()
@@ -264,6 +272,7 @@ class PayLendingCreateView(CreateAPIView):
         if self.request.user.is_authenticated:
             return self.queryset.filter(branch=self.request.user.branch)
         return self.queryset.none()
+
 
 class LendingListView(ListAPIView):
     queryset = Lending.objects.all()
@@ -297,6 +306,7 @@ class LendingListView(ListAPIView):
             return queryset
         return self.queryset.none()
 
+
 class LendingDetailView(RetrieveUpdateDestroyAPIView):
     queryset = Lending.objects.all()
     serializer_class = LendingUpdateSerializer
@@ -315,7 +325,7 @@ class SalaryListCreateView(ListCreateAPIView):
 
     def perform_create(self, serializer):
         serializer.save(
-            branch= self.request.user.branch,
+            branch=self.request.user.branch,
             from_user=self.request.user,
         )
 
@@ -363,9 +373,44 @@ class DetailedBranchStatisticsView(APIView):
         order_income_paid = orders.aggregate(total=Sum("paid"))["total"] or 0
         order_income_landing = orders.aggregate(total=Sum("landing"))["total"] or 0
 
-        lendings = Lending.objects.filter(branch=request.user.branch, created_at__range=[start_date, end_date], is_lending=False)
-        lending_income_details = lendings.values("client__first_name").annotate(total_lending=Sum("lending_amount"))
-        lending_income_total = lendings.aggregate(total=Sum("lending_amount"))["total"] or 0
+        order_products = OrderProduct.objects.filter(order__branch=request.user.branch,
+                                                     order__created_at__range=[start_date, end_date])
+        net_selling_product = order_products.aggregate(
+            total_profit=Sum(F("amount") * (F("product__sell_price") - F("product__arrival_price")),
+                             output_field=DecimalField()
+                             ))["total_profit"] or 0
+        total_discounts = order_products.aggregate(
+            total_discount=Sum(
+                Case(
+                    When(discount_type="%", then=F("total") * F("discount") / Value(100)),
+                    When(discount_type="$", then=F("discount")),
+                    default=Value(0),
+                    output_field=DecimalField()
+                )
+            )
+        )["total_discount"] or 0
+
+        services = OrderService.objects.filter(
+            order__created_at__range=[start_date, end_date]
+        )
+        service_totals_with_discount = services.annotate(
+            adjusted_total=Case(
+                When(
+                    discount_type="%",
+                    then=F("total") * (1 - F("discount") / 100)
+                ),
+                When(
+                    discount_type="$",
+                    then=F("total") - F("discount")
+                ),
+                default=F("total"),
+                output_field=DecimalField(max_digits=15, decimal_places=2),
+            )
+        ).aggregate(total=Sum("adjusted_total"))["total"] or 0
+
+        # lendings = Lending.objects.filter(branch=request.user.branch, created_at__range=[start_date, end_date], is_lending=False)
+        # lending_income_details = lendings.values("client__first_name").annotate(total_lending=Sum("lending_amount"))
+        # lending_income_total = lendings.aggregate(total=Sum("lending_amount"))["total"] or 0
 
         incomes = {
             "order_income": {
@@ -374,11 +419,14 @@ class DetailedBranchStatisticsView(APIView):
                 "landing": order_income_landing,
                 "details": list(order_income_details)
             },
-            "client_lending_payments": {
-                "total": lending_income_total,
-                "details": list(lending_income_details)
-            },
-            "total_income": order_income_total + lending_income_total
+            "net_product_profit": net_selling_product - total_discounts,
+            "net_service_profit": service_totals_with_discount,
+            # "client_lending_payments": {
+            #     "total": lending_income_total,
+            #     "details": list(lending_income_details)
+            # },
+            # "total_income": order_income_total + lending_income_total
+            "total_income": order_income_total
         }
 
         expenses = Expense.objects.filter(branch=request.user.branch, created_at__range=[start_date, end_date])
@@ -456,12 +504,19 @@ class DetailedBranchStatisticsView(APIView):
 
         net_income = incomes["total_income"] - outcomes["total_outcome"]
 
+        russian_months = {
+            1: "января", 2: "февраля", 3: "марта", 4: "апреля",
+            5: "мая", 6: "июня", 7: "июля", 8: "августа",
+            9: "сентября", 10: "октября", 11: "ноября", 12: "декабря"
+        }
+
         formatted_start_date = start_date.strftime("%d-%m-%Y")
         formatted_end_date = end_date.strftime("%d-%m-%Y")
 
         data = {
             "branch_id": request.user.branch.id,
             "duration": duration,
+            "month": russian_months[start_date.month],
             "start_date": formatted_start_date,
             "end_date": formatted_end_date,
             "incomes": incomes,
@@ -480,4 +535,3 @@ class DetailedBranchStatisticsView(APIView):
         }
 
         return Response(data)
-
