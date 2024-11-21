@@ -600,6 +600,10 @@ class DetailedBranchStatisticsView(APIView):
         warehouse_import_total = import_list.aggregate(total=Sum("total"))["total"] or 0
         by_transfer_total = import_list.filter(payment_type="0").aggregate(total=Sum("total"))["total"] or 0
 
+        expenses = Expense.objects.filter(branch=request.user.branch, created_at__range=[start_date, end_date])
+        general_expense_details = expenses.values("type__name").annotate(total_amount=Sum("amount"))
+        general_expense_total = expenses.aggregate(total=Sum("amount"))["total"] or 0
+
         total_supplier_debt = Supplier.objects.filter(branch=request.user.branch).aggregate(
             total=Sum("debt"))["total"] or 0
         supplier_debt_details = Supplier.objects.filter(branch=request.user.branch).values(
@@ -659,17 +663,21 @@ class DetailedBranchStatisticsView(APIView):
             },
             "import_products_warehouse": warehouse_import_total,
             "import_products_by_transfer": by_transfer_total,
+            "expenses": {
+                "total": general_expense_total,
+                "details": list(general_expense_details)
+            },
             "debt_from_supplier": {
                 "total": total_supplier_debt,
-                "detail": supplier_debt_details
+                "detail": list(supplier_debt_details)
             },
             "supplier_payments": {
                 "total": total_supplier_payments,
-                "detail": supplier_payment_detail
+                "detail": list(supplier_payment_detail)
             },
             "client_lending": {
                 "total": total_client_lending,
-                "detail": client_lending_details
+                "detail": list(client_lending_details)
             },
             "warehouse": {
                 "total": warehouse_total,
