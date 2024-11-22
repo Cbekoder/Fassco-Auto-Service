@@ -625,7 +625,7 @@ class DetailedBranchStatisticsView(APIView):
                     ).aggregate(total=Sum("adjusted_total"))["total"] or 0
 
         import_list = ImportList.objects.filter(branch=request.user.branch, created_at__range=[start_date, end_date])
-        warehouse_import_total = import_list.aggregate(total=Sum("total"))["total"] or 0
+        warehouse_import_total = import_list.exclude(payment_type="0").aggregate(total=Sum("total"))["total"] or 0
         by_transfer_total = import_list.filter(payment_type="0").aggregate(total=Sum("total"))["total"] or 0
 
         expenses = Expense.objects.filter(branch=request.user.branch, created_at__range=[start_date, end_date])
