@@ -5,6 +5,7 @@ from rest_framework.permissions import IsAuthenticated
 from users.permissions import IsAdminUser
 from branches.models import Branch
 from branches.serializers import BranchBalanceSerializer
+from users.serializers import UserSerializer
 
 
 class BranchBalanceAPIView(APIView):
