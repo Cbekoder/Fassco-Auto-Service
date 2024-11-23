@@ -580,7 +580,6 @@ class DetailedBranchStatisticsView(APIView):
 
         # Calculations
         orders = Order.objects.filter(branch=request.user.branch, created_at__range=[start_date, end_date])
-        order_income_total = orders.aggregate(total=Sum("overall_total"))["total"] or 0
 
         order_products = OrderProduct.objects.filter(order__branch=request.user.branch,
                                                     order__created_at__range=[start_date, end_date])
@@ -621,6 +620,7 @@ class DetailedBranchStatisticsView(APIView):
                             output_field=DecimalField(max_digits=15, decimal_places=2),
                         )
                     ).aggregate(total=Sum("adjusted_total"))["total"] or 0
+        order_income_total = products_totals_with_discount + service_totals_with_discount
 
         import_list = ImportList.objects.filter(branch=request.user.branch, created_at__range=[start_date, end_date])
         warehouse_import_total = import_list.exclude(payment_type="0").aggregate(total=Sum("total"))["total"] or 0
