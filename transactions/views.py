@@ -580,7 +580,7 @@ class DetailedBranchStatisticsView(APIView):
 
         # Calculations
         orders = Order.objects.filter(branch=request.user.branch, created_at__range=[start_date, end_date])
-        order_income_total = orders.aggregate(total=Sum("total"))["total"] or 0
+        order_income_total = orders.aggregate(total=Sum("overall_total"))["total"] or 0
 
         order_products = OrderProduct.objects.filter(order__branch=request.user.branch,
                                                     order__created_at__range=[start_date, end_date])
