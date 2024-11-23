@@ -1,7 +1,4 @@
-from collections import defaultdict
 from decimal import Decimal
-from netrc import netrc
-
 from drf_yasg import openapi
 from django.utils import timezone
 from datetime import datetime, timedelta
@@ -14,7 +11,6 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.db.models import Sum, Case, When, F, DecimalField, Value
-from urllib3 import request
 
 from branches.models import Wallet
 from inventory.models import Product
