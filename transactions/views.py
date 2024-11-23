@@ -628,12 +628,12 @@ class DetailedBranchStatisticsView(APIView):
         latest_import_product = ImportProduct.objects.filter(
             import_list__created_at__range=[start_date, end_date],
             import_list__branch=request.user.branch
-        ).order_by('-import_list__created_at').first()
+        ).order_by('-import_list__created_at', '-id').first()
 
         latest_order_product = OrderProduct.objects.filter(
             order__created_at__range=[start_date, end_date],
             order__branch=request.user.branch
-        ).order_by('-order__created_at').first()
+        ).order_by('-order__created_at', '-id').first()
 
         if latest_import_product and latest_order_product:
             if latest_import_product.import_list.created_at >= latest_order_product.order.created_at:

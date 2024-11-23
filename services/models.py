@@ -211,18 +211,17 @@ class OrderProduct(models.Model):
                     else:
                         raise ValidationError({"detail": "Discount amount must be from 0 to product sell price if discout type is $"})
 
+            warehouse_products = Product.objects.filter(branch=self.order.branch, is_temp=False)
+            warehouse_total = warehouse_products.filter(amount__gt=0).aggregate(
+                total_value=Sum(
+                    F("amount") * F("sell_price"), output_field=DecimalField()))["total_value"] or 0
+            self.warehouse_remainder = warehouse_total - (Decimal(self.amount) * self.product.sell_price)
+
             super().save(*args, **kwargs)
             if self.order.manager:
                 manager = self.order.manager
                 manager.balance += Decimal(manager.commission_per / 100) * Decimal(self.amount) * self.product.sell_price
                 manager.save()
-
-            warehouse_products = Product.objects.filter(branch=self.order.branch, is_temp=False)
-            warehouse_total = warehouse_products.filter(amount__gt=0).aggregate(
-                total_value=Sum(
-                    F("amount") * F("sell_price"), output_field=DecimalField()))["total_value"] or 0
-            self.warehouse_remainder = warehouse_total
-            self.save()
 
             self.order.total += self.total
             self.order.product_total += self.total
