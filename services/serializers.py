@@ -73,17 +73,21 @@ class OrderProductPostSerializer(ModelSerializer):
 class OrderPostSerializer(ModelSerializer):
     services = OrderServicePostSerializer(many=True, required=False)
     products = OrderProductPostSerializer(many=True, required=False)
+    user_full_name = SerializerMethodField()
 
     class Meta:
         model = Order
         fields = ['id', 'client', 'car', 'description', 'overall_total', 'total', 'paid', 'landing', 'odo_mileage', 'hev_mileage', 'ev_mileage',
-                  'branch', 'manager', 'start_date', 'end_date', 'plan_date', 'created_at', 'services', 'products']
-        read_only_fields = ['id', 'created_at', 'branch', 'overall_total']
+                  'branch', 'manager', 'user_full_name', 'start_date', 'end_date', 'plan_date', 'created_at', 'services', 'products']
+        read_only_fields = ['id', 'created_at', 'user_full_name', 'branch', 'overall_total']
 
     total = DecimalField(max_digits=15, decimal_places=0, required=False)
     landing = DecimalField(max_digits=15, decimal_places=0, required=False)
     manager = PrimaryKeyRelatedField(queryset=Employee.objects.filter(position='manager'), allow_null=True)
 
+    def get_user_full_name(self, obj):
+        user = self.context['request'].user
+        return user.get_full_name() if hasattr(user, 'get_full_name') else user.username
 
     def create(self, validated_data):
         with transaction.atomic():

@@ -7,6 +7,7 @@ from .views import *
 
 
 urlpatterns = [
+    path("get-me/", GetMeAPIView.as_view(), name="get-user"),
     path('employees/', EmployeeListView.as_view(), name='employee_list'),
     path('suppliers/', SupplierListCreateView.as_view(), name='supplier_list_create'),
     path('supplier/<int:pk>/', SupplierRetrieveUpdateDestroyView.as_view(), name='supplier_detail'),

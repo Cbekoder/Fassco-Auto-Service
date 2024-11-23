@@ -1,12 +1,8 @@
 from decimal import Decimal
-from inspect import walktree
-
-from django.core.validators import MinValueValidator
 from django.db import models, transaction
 from django.utils.translation import gettext_lazy as _
 from rest_framework.exceptions import ValidationError
-from rest_framework.fields import empty
-
+from django.db.models import Sum, Case, When, F, DecimalField
 from branches.models import Branch, Wallet
 from inventory.models import Product
 from users.models import User, Employee, Supplier, Client
@@ -113,6 +109,7 @@ class ImportProduct(models.Model):
     sell_price = models.DecimalField(max_digits=15, decimal_places=0, verbose_name=_('Sell price'))
     total_summ = models.DecimalField(max_digits=15, null=True, decimal_places=0, verbose_name=_('Total summ'))
     import_list = models.ForeignKey(ImportList, on_delete=models.CASCADE, verbose_name=_('Import list'))
+    warehouse_remainder = models.FloatField(default=0, blank=True, verbose_name=_('Amount'))
 
     class Meta:
         verbose_name = _('Import product')
@@ -153,6 +150,10 @@ class ImportProduct(models.Model):
                 self.product = wareProduct
             self.total_summ = self.arrival_price * Decimal(self.amount)
             super().save(*args, **kwargs)
+            warehouse_products = Product.objects.filter(branch=self.order.branch, is_temp=False)
+            warehouse_total = warehouse_products.filter(amount__gt=0).aggregate(
+                total_value=Sum(
+                    F("amount") * F("sell_price"), output_field=DecimalField()))["total_value"] or 0
 
             self.import_list.total += self.total_summ
             self.import_list.save()

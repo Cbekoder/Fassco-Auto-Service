@@ -1,5 +1,6 @@
 from decimal import Decimal
 from django.db import models, transaction
+from django.db.models import Sum, Case, When, F, DecimalField
 from django.utils.translation import gettext_lazy as _
 from rest_framework.exceptions import ValidationError
 from django.utils import timezone
@@ -171,6 +172,7 @@ class OrderProduct(models.Model):
     discount_type = models.CharField(max_length=1, choices=ORDER_TYPES, default="%", verbose_name=_('Discount type'))
     discount = models.DecimalField(default=0, max_digits=15, decimal_places=0,verbose_name=_('Discount'))
     description = models.TextField(blank=True, null=True, verbose_name=_('Description'))
+    warehouse_remainder = models.FloatField(default=0, blank=True, verbose_name=_('Amount'))
 
     class Meta:
         verbose_name = _('Order product')
@@ -214,6 +216,13 @@ class OrderProduct(models.Model):
                 manager = self.order.manager
                 manager.balance += Decimal(manager.commission_per / 100) * Decimal(self.amount) * self.product.sell_price
                 manager.save()
+
+            warehouse_products = Product.objects.filter(branch=self.order.branch, is_temp=False)
+            warehouse_total = warehouse_products.filter(amount__gt=0).aggregate(
+                total_value=Sum(
+                    F("amount") * F("sell_price"), output_field=DecimalField()))["total_value"] or 0
+            self.warehouse_remainder = warehouse_total
+            self.save()
 
             self.order.total += self.total
             self.order.product_total += self.total

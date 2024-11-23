@@ -1,6 +1,12 @@
 from rest_framework.fields import SerializerMethodField
 from rest_framework.serializers import ModelSerializer, ValidationError
-from .models import Employee, Supplier, Client
+from .models import Employee, Supplier, Client, User
+
+
+class UserSerializer(ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['id', 'first_name', 'last_name', 'full_name', 'username']
 
 
 class SupplierSerializer(ModelSerializer):

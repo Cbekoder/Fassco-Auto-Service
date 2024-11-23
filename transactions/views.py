@@ -1,5 +1,6 @@
 from collections import defaultdict
 from decimal import Decimal
+from netrc import netrc
 
 from drf_yasg import openapi
 from django.utils import timezone
@@ -13,6 +14,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.db.models import Sum, Case, When, F, DecimalField, Value
+from urllib3 import request
 
 from branches.models import Wallet
 from inventory.models import Product
@@ -626,7 +628,29 @@ class DetailedBranchStatisticsView(APIView):
 
         import_list = ImportList.objects.filter(branch=request.user.branch, created_at__range=[start_date, end_date])
         warehouse_import_total = import_list.exclude(payment_type="0").aggregate(total=Sum("total"))["total"] or 0
-        by_transfer_total = import_list.filter(payment_type="0").aggregate(total=Sum("total"))["total"] or 0
+
+        latest_import_product = ImportProduct.objects.filter(
+            import_list__created_at__range=[start_date, end_date],
+            import_list__branch=request.user.branch
+        ).order_by('-import_list__created_at').first()
+
+        latest_order_product = OrderProduct.objects.filter(
+            order__created_at__range=[start_date, end_date],
+            order__branch=request.user.branch
+        ).order_by('-order__created_at').first()
+
+        if latest_import_product and latest_order_product:
+            if latest_import_product.import_list.created_at >= latest_order_product.order.created_at:
+                latest_warehouse_remainder = latest_import_product.warehouse_remainder
+            else:
+                latest_warehouse_remainder = latest_order_product.warehouse_remainder
+        elif latest_import_product:
+            latest_warehouse_remainder = latest_import_product.warehouse_remainder
+        elif latest_order_product:
+            latest_warehouse_remainder = latest_order_product.warehouse_remainder
+        else:
+            latest_warehouse_remainder = 0
+
 
         expenses = Expense.objects.filter(branch=request.user.branch, created_at__range=[start_date, end_date])
         general_expense_details = expenses.values("type__name").annotate(total_amount=Sum("amount"))
@@ -636,6 +660,7 @@ class DetailedBranchStatisticsView(APIView):
             total=Sum("debt"))["total"] or 0
         supplier_debt_details = Supplier.objects.filter(branch=request.user.branch).values(
             "first_name", "last_name").annotate(total_debt=Sum("debt")).exclude(total_debt=0)
+        
         total_supplier_payments = Debt.objects.filter(branch=request.user.branch,
                                                       is_debt=False,
                                                       created_at__range=[start_date, end_date]).aggregate(
@@ -663,13 +688,24 @@ class DetailedBranchStatisticsView(APIView):
         warehouse_sell_price = warehouse_products.filter(amount__gt=0).aggregate(
             total_value=Sum(F("amount") * F("sell_price"), output_field=DecimalField()))["total_value"] or 0
 
+
         import_products = ImportProduct.objects.filter(import_list__branch=request.user.branch,
                                                        import_list__created_at__range=[start_date, end_date])
+        not_transfer_products = import_products.exclude(import_list__payment_type="0")
+        not_transfer_total = not_transfer_products.aggregate(total=Sum("total_summ"))["total"] or 0
+        not_transfer_total_arrival_price = not_transfer_products.aggregate(
+                total=Sum(F("product__arrival_price") * F("product__amount"), output_field=DecimalField()))["total"] or 0
+        not_transfer_total_sell_price = not_transfer_products.aggregate(
+            total=Sum(F("product__sell_price") * F("product__amount"), output_field=DecimalField()))["total"] or 0
+        
         by_transfer_products = import_products.filter(import_list__payment_type="0")
+        by_transfer_total = by_transfer_products.aggregate(total=Sum("total_summ"))["total"] or 0
         by_transfer_total_arrival_price = by_transfer_products.aggregate(
             total=Sum(F("product__arrival_price") * F("product__amount"), output_field=DecimalField()))["total"] or 0
         by_transfer_total_sell_price = by_transfer_products.aggregate(
             total=Sum(F("product__sell_price") * F("product__amount"), output_field=DecimalField()))["total"] or 0
+
+        net_income = order_income_total - (general_expense_total + warehouse_import_total + total_supplier_payments)
 
         russian_months = {
             1: "января", 2: "февраля", 3: "марта", 4: "апреля",
@@ -695,8 +731,7 @@ class DetailedBranchStatisticsView(APIView):
                     "total_with_discount": service_totals_with_discount
                 }
             },
-            "import_products_warehouse": warehouse_import_total,
-            "import_products_by_transfer": by_transfer_total,
+            "warehouse_remainder": latest_warehouse_remainder,
             "expenses": {
                 "total": general_expense_total,
                 "details": list(general_expense_details)
@@ -719,11 +754,17 @@ class DetailedBranchStatisticsView(APIView):
                 "sell_price": warehouse_sell_price,
                 "detail": warehouse_detail
             },
+            "not_transfer": {
+                "total" : not_transfer_total,
+                "arrival_price": not_transfer_total_arrival_price,
+                "sell_price": not_transfer_total_sell_price
+            },
             "by_transfer": {
                 "total": by_transfer_total,
                 "arrival_price": by_transfer_total_arrival_price,
                 "sell_price": by_transfer_total_sell_price
-            }
+            },
+            "net_income": net_income
         }
 
         return Response(response_data)

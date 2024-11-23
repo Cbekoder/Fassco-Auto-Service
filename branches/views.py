@@ -17,4 +17,6 @@ class BranchBalanceAPIView(APIView):
         if request.user.is_authenticated:
             branch = Branch.objects.get(id=request.user.branch.id)
             serializer = BranchBalanceSerializer(branch)
-            return Response(serializer.data)
+            response = serializer.data
+            response['user'] = UserSerializer(request.user).data
+            return Response(response)
