@@ -624,6 +624,7 @@ class DetailedBranchStatisticsView(APIView):
 
         import_list = ImportList.objects.filter(branch=request.user.branch, created_at__range=[start_date, end_date])
         warehouse_import_total = import_list.exclude(payment_type="0").aggregate(total=Sum("total"))["total"] or 0
+        warehouse_import_paid = import_list.exclude(payment_type="0").aggregate(total=Sum("paid"))["total"] or 0
 
         latest_import_product = ImportProduct.objects.filter(
             import_list__created_at__range=[start_date, end_date],
@@ -701,7 +702,7 @@ class DetailedBranchStatisticsView(APIView):
         by_transfer_total_sell_price = by_transfer_products.aggregate(
             total=Sum(F("product__sell_price") * F("product__amount"), output_field=DecimalField()))["total"] or 0
 
-        net_income = order_income_total - (general_expense_total + warehouse_import_total + total_supplier_payments)
+        net_income = order_income_total - (general_expense_total + warehouse_import_paid + total_supplier_payments)
 
         russian_months = {
             1: "января", 2: "февраля", 3: "марта", 4: "апреля",

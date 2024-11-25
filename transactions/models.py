@@ -154,7 +154,7 @@ class ImportProduct(models.Model):
             warehouse_total = warehouse_products.filter(amount__gt=0).aggregate(
                 total_value=Sum(
                     F("amount") * F("sell_price"), output_field=DecimalField()))["total_value"] or 0
-            self.warehouse_remainder = warehouse_total + (self.product.sell_price * self.product.amount)
+            self.warehouse_remainder = warehouse_total + (self.product.sell_price * Decimal(self.product.amount))
             super().save(*args, **kwargs)
 
             self.import_list.total += self.total_summ
