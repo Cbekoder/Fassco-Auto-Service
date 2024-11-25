@@ -691,16 +691,16 @@ class DetailedBranchStatisticsView(APIView):
         not_transfer_products = import_products.exclude(import_list__payment_type="0")
         not_transfer_total = not_transfer_products.aggregate(total=Sum("total_summ"))["total"] or 0
         not_transfer_total_arrival_price = not_transfer_products.aggregate(
-                total=Sum(F("product__arrival_price") * F("product__amount"), output_field=DecimalField()))["total"] or 0
+                                                total=Sum(F("arrival_price") * F("amount"), output_field=DecimalField()))["total"] or 0
         not_transfer_total_sell_price = not_transfer_products.aggregate(
-            total=Sum(F("product__sell_price") * F("product__amount"), output_field=DecimalField()))["total"] or 0
+            total=Sum(F("sell_price") * F("amount"), output_field=DecimalField()))["total"] or 0
         
         by_transfer_products = import_products.filter(import_list__payment_type="0")
         by_transfer_total = by_transfer_products.aggregate(total=Sum("total_summ"))["total"] or 0
         by_transfer_total_arrival_price = by_transfer_products.aggregate(
-            total=Sum(F("product__arrival_price") * F("product__amount"), output_field=DecimalField()))["total"] or 0
+            total=Sum(F("arrival_price") * F("amount"), output_field=DecimalField()))["total"] or 0
         by_transfer_total_sell_price = by_transfer_products.aggregate(
-            total=Sum(F("product__sell_price") * F("product__amount"), output_field=DecimalField()))["total"] or 0
+            total=Sum(F("sell_price") * F("amount"), output_field=DecimalField()))["total"] or 0
 
         net_income = order_income_total - (general_expense_total + warehouse_import_paid + total_supplier_payments)
 
