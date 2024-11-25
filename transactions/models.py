@@ -153,17 +153,20 @@ class ImportProduct(models.Model):
                 self.product = wareProduct
             self.total_summ = self.arrival_price * Decimal(self.amount)
 
-            warehouse_products = Product.objects.filter(branch=self.import_list.branch, is_temp=False)
+            obj_product_sell_price = self.product.sell_price if self.product.sell_price == self.sell_price else self.sell_price
+            obj_product_arrival_price = self.product.arrival if self.product.arrival_price == self.arrival_price else self.arrival_price
+
+            warehouse_products = Product.objects.filter(branch=self.import_list.branch, is_temp=False).exclude(id=self.product.id)
             warehouse_total_sell = warehouse_products.filter(amount__gt=0).aggregate(
                 total_value=Sum(
                     F("amount") * F("sell_price"), output_field=DecimalField()))["total_value"] or 0
             self.warehouse_remainder_sell_price = warehouse_total_sell + (
-                    Decimal(self.amount) * self.product.sell_price)
+                    Decimal(self.amount) * obj_product_sell_price)
             warehouse_total_arrival = warehouse_products.filter(amount__gt=0).aggregate(
                 total_value=Sum(
                     F("amount") * F("arrival_price"), output_field=DecimalField()))["total_value"] or 0
             self.warehouse_remainder_arrival_price = warehouse_total_arrival + (
-                    Decimal(self.amount) * self.product.arrival_price)
+                    Decimal(self.amount) * obj_product_arrival_price)
 
             super().save(*args, **kwargs)
 
