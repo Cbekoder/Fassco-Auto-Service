@@ -638,15 +638,20 @@ class DetailedBranchStatisticsView(APIView):
 
         if latest_import_product and latest_order_product:
             if latest_import_product.import_list.created_at >= latest_order_product.order.created_at:
-                latest_warehouse_remainder = latest_import_product.warehouse_remainder
+                latest_warehouse_remainder_sell = latest_import_product.warehouse_remainder_sell_price
+                latest_warehouse_remainder_arrival = latest_import_product.warehouse_remainder_arrival_price
             else:
-                latest_warehouse_remainder = latest_order_product.warehouse_remainder
+                latest_warehouse_remainder_sell = latest_order_product.warehouse_remainder_sell_price
+                latest_warehouse_remainder_arrival = latest_order_product.warehouse_remainder_arrival_price
         elif latest_import_product:
-            latest_warehouse_remainder = latest_import_product.warehouse_remainder
+            latest_warehouse_remainder_sell = latest_import_product.warehouse_remainder_sell_price
+            latest_warehouse_remainder_arrival = latest_import_product.warehouse_remainder_arrival_price
         elif latest_order_product:
-            latest_warehouse_remainder = latest_order_product.warehouse_remainder
+            latest_warehouse_remainder_sell = latest_order_product.warehouse_remainder_sell_price
+            latest_warehouse_remainder_arrival = latest_order_product.warehouse_remainder_arrival_price
         else:
-            latest_warehouse_remainder = 0
+            latest_warehouse_remainder_sell = 0
+            latest_warehouse_remainder_arrival = 0
 
 
         expenses = Expense.objects.filter(branch=request.user.branch, created_at__range=[start_date, end_date])
@@ -657,7 +662,7 @@ class DetailedBranchStatisticsView(APIView):
             total=Sum("debt"))["total"] or 0
         supplier_debt_details = Supplier.objects.filter(branch=request.user.branch).values(
             "first_name", "last_name").annotate(total_debt=Sum("debt")).exclude(total_debt=0)
-        
+
         total_supplier_payments = Debt.objects.filter(branch=request.user.branch,
                                                       is_debt=False,
                                                       created_at__range=[start_date, end_date]).aggregate(
@@ -674,7 +679,7 @@ class DetailedBranchStatisticsView(APIView):
             "first_name", "last_name").annotate(total_lending=Sum("lending")).exclude(total_lending=0)
 
         warehouse_products = Product.objects.filter(branch=request.user.branch, is_temp=False)
-        warehouse_total = warehouse_products.filter(amount__gt=0).aggregate(
+        warehouse_profit = warehouse_products.filter(amount__gt=0).aggregate(
             total_value=Sum(F("amount") * (F("sell_price") - F("arrival_price")), output_field=DecimalField()))["total_value"] or 0
         warehouse_detail = Product.objects.filter(branch=request.user.branch, is_temp=False).values(
             "code", "name").annotate(
@@ -693,7 +698,7 @@ class DetailedBranchStatisticsView(APIView):
                                                 total=Sum(F("arrival_price") * F("amount"), output_field=DecimalField()))["total"] or 0
         not_transfer_total_sell_price = not_transfer_products.aggregate(
             total=Sum(F("sell_price") * F("amount"), output_field=DecimalField()))["total"] or 0
-        
+
         by_transfer_products = import_products.filter(import_list__payment_type="0")
         by_transfer_total_arrival_price = by_transfer_products.aggregate(
             total=Sum(F("arrival_price") * F("amount"), output_field=DecimalField()))["total"] or 0
@@ -726,7 +731,11 @@ class DetailedBranchStatisticsView(APIView):
                     "total_with_discount": service_totals_with_discount
                 }
             },
-            "warehouse_remainder": latest_warehouse_remainder,
+            "warehouse_remainder": {
+                "sell_price": latest_warehouse_remainder_sell,
+                "arrival_price": latest_warehouse_remainder_arrival,
+                "net_profit": latest_warehouse_remainder_sell - latest_warehouse_remainder_arrival
+            },
             "expenses": {
                 "total": general_expense_total,
                 "details": list(general_expense_details)
@@ -744,9 +753,9 @@ class DetailedBranchStatisticsView(APIView):
                 "detail": list(client_lending_details)
             },
             "warehouse": {
-                "total": warehouse_total,
                 "arrival_price": warehouse_arrival_price,
                 "sell_price": warehouse_sell_price,
+                "net_profit": warehouse_profit,
                 "detail": warehouse_detail
             },
             "not_transfer": {

@@ -13,7 +13,7 @@ class Order(models.Model):
     client = models.ForeignKey(Client, on_delete=models.CASCADE, null=True, blank=True)
     car = models.ForeignKey(Car, on_delete=models.CASCADE, verbose_name=_('Car'))
     description = models.TextField(blank=True, null=True, verbose_name=_('Description'))
-    overall_total = models.DecimalField(max_digits=15, decimal_places=0,  null=True)
+    overall_total = models.DecimalField(max_digits=15, decimal_places=0, null=True)
     total = models.DecimalField(max_digits=15, decimal_places=0, verbose_name=_('Total'))
     paid = models.DecimalField(max_digits=15, decimal_places=0, verbose_name=_('Paid'))
     landing = models.DecimalField(max_digits=15, decimal_places=0, verbose_name=_('Debt'))
@@ -90,10 +90,12 @@ class Order(models.Model):
 
             super(Order, self).delete(*args, **kwargs)
 
+
 ORDER_TYPES = (
     ('%', "Percentage"),
     ('$', "Money"),
 )
+
 
 class OrderService(models.Model):
     order = models.ForeignKey(Order, on_delete=models.CASCADE)
@@ -137,7 +139,8 @@ class OrderService(models.Model):
                     if 0 < self.discount < self.service.price:
                         self.total -= self.discount
                     else:
-                        raise ValidationError({'detail': 'If discount_type is $, Discount must be between 1000 and service.price'})
+                        raise ValidationError(
+                            {'detail': 'If discount_type is $, Discount must be between 1000 and service.price'})
 
             super().save(*args, **kwargs)
             if self.mechanic:
@@ -160,8 +163,6 @@ class OrderService(models.Model):
                 self.order.save()
 
             super(OrderService, self).delete(*args, **kwargs)
-            
-
 
 
 class OrderProduct(models.Model):
@@ -170,9 +171,12 @@ class OrderProduct(models.Model):
     amount = models.FloatField(default=1, verbose_name=_('Amount'))
     total = models.DecimalField(max_digits=15, decimal_places=0, verbose_name=_('Total'))
     discount_type = models.CharField(max_length=1, choices=ORDER_TYPES, default="%", verbose_name=_('Discount type'))
-    discount = models.DecimalField(default=0, max_digits=15, decimal_places=0,verbose_name=_('Discount'))
+    discount = models.DecimalField(default=0, max_digits=15, decimal_places=0, verbose_name=_('Discount'))
     description = models.TextField(blank=True, null=True, verbose_name=_('Description'))
-    warehouse_remainder = models.FloatField(default=0, blank=True, verbose_name=_('Amount'))
+    warehouse_remainder_sell_price = models.FloatField(default=0, blank=True,
+                                                       verbose_name=_('Warehouse remainder sell price'))
+    warehouse_remainder_arrival_price = models.FloatField(default=0, blank=True,
+                                                          verbose_name=_('Warehouse remainder arrival price'))
 
     class Meta:
         verbose_name = _('Order product')
@@ -209,18 +213,26 @@ class OrderProduct(models.Model):
                     if 0 < self.discount <= self.product.sell_price:
                         self.total -= self.discount
                     else:
-                        raise ValidationError({"detail": "Discount amount must be from 0 to product sell price if discout type is $"})
+                        raise ValidationError(
+                            {"detail": "Discount amount must be from 0 to product sell price if discout type is $"})
 
             warehouse_products = Product.objects.filter(branch=self.order.branch, is_temp=False)
-            warehouse_total = warehouse_products.filter(amount__gt=0).aggregate(
+            warehouse_total_sell = warehouse_products.filter(amount__gt=0).aggregate(
                 total_value=Sum(
                     F("amount") * F("sell_price"), output_field=DecimalField()))["total_value"] or 0
-            self.warehouse_remainder = warehouse_total - (Decimal(self.amount) * self.product.sell_price)
+            self.warehouse_remainder_sell_price = warehouse_total_sell - (
+                        Decimal(self.amount) * self.product.sell_price)
+            warehouse_total_arrival = warehouse_products.filter(amount__gt=0).aggregate(
+                total_value=Sum(
+                    F("amount") * F("arrival_price"), output_field=DecimalField()))["total_value"] or 0
+            self.warehouse_remainder_arrival_price = warehouse_total_arrival - (
+                        Decimal(self.amount) * self.product.arrival_price)
 
             super().save(*args, **kwargs)
             if self.order.manager:
                 manager = self.order.manager
-                manager.balance += Decimal(manager.commission_per / 100) * Decimal(self.amount) * self.product.sell_price
+                manager.balance += Decimal(manager.commission_per / 100) * Decimal(
+                    self.amount) * self.product.sell_price
                 manager.save()
 
             self.order.total += self.total

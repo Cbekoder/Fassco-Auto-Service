@@ -109,7 +109,10 @@ class ImportProduct(models.Model):
     sell_price = models.DecimalField(max_digits=15, decimal_places=0, verbose_name=_('Sell price'))
     total_summ = models.DecimalField(max_digits=15, null=True, decimal_places=0, verbose_name=_('Total summ'))
     import_list = models.ForeignKey(ImportList, on_delete=models.CASCADE, verbose_name=_('Import list'))
-    warehouse_remainder = models.FloatField(default=0, blank=True, verbose_name=_('Amount'))
+    warehouse_remainder_sell_price = models.FloatField(default=0, blank=True,
+                                                       verbose_name=_('Warehouse remainder sell price'))
+    warehouse_remainder_arrival_price = models.FloatField(default=0, blank=True,
+                                                          verbose_name=_('Warehouse remainder arrival price'))
 
     class Meta:
         verbose_name = _('Import product')
@@ -151,10 +154,17 @@ class ImportProduct(models.Model):
             self.total_summ = self.arrival_price * Decimal(self.amount)
 
             warehouse_products = Product.objects.filter(branch=self.import_list.branch, is_temp=False)
-            warehouse_total = warehouse_products.filter(amount__gt=0).aggregate(
+            warehouse_total_sell = warehouse_products.filter(amount__gt=0).aggregate(
                 total_value=Sum(
                     F("amount") * F("sell_price"), output_field=DecimalField()))["total_value"] or 0
-            self.warehouse_remainder = warehouse_total + (self.product.sell_price * Decimal(self.product.amount))
+            self.warehouse_remainder_sell_price = warehouse_total_sell + (
+                    Decimal(self.amount) * self.product.sell_price)
+            warehouse_total_arrival = warehouse_products.filter(amount__gt=0).aggregate(
+                total_value=Sum(
+                    F("amount") * F("arrival_price"), output_field=DecimalField()))["total_value"] or 0
+            self.warehouse_remainder_arrival_price = warehouse_total_arrival + (
+                    Decimal(self.amount) * self.product.arrival_price)
+
             super().save(*args, **kwargs)
 
             self.import_list.total += self.total_summ
