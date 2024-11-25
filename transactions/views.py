@@ -689,14 +689,12 @@ class DetailedBranchStatisticsView(APIView):
         import_products = ImportProduct.objects.filter(import_list__branch=request.user.branch,
                                                        import_list__created_at__range=[start_date, end_date])
         not_transfer_products = import_products.exclude(import_list__payment_type="0")
-        not_transfer_total = not_transfer_products.aggregate(total=Sum("total_summ"))["total"] or 0
         not_transfer_total_arrival_price = not_transfer_products.aggregate(
                                                 total=Sum(F("arrival_price") * F("amount"), output_field=DecimalField()))["total"] or 0
         not_transfer_total_sell_price = not_transfer_products.aggregate(
             total=Sum(F("sell_price") * F("amount"), output_field=DecimalField()))["total"] or 0
         
         by_transfer_products = import_products.filter(import_list__payment_type="0")
-        by_transfer_total = by_transfer_products.aggregate(total=Sum("total_summ"))["total"] or 0
         by_transfer_total_arrival_price = by_transfer_products.aggregate(
             total=Sum(F("arrival_price") * F("amount"), output_field=DecimalField()))["total"] or 0
         by_transfer_total_sell_price = by_transfer_products.aggregate(
@@ -752,13 +750,11 @@ class DetailedBranchStatisticsView(APIView):
                 "detail": warehouse_detail
             },
             "not_transfer": {
-                "total" : not_transfer_total,
                 "arrival_price": not_transfer_total_arrival_price,
                 "sell_price": not_transfer_total_sell_price,
                 "net_profit": not_transfer_total_sell_price - not_transfer_total_arrival_price
             },
             "by_transfer": {
-                "total": by_transfer_total,
                 "arrival_price": by_transfer_total_arrival_price,
                 "sell_price": by_transfer_total_sell_price,
                 "net_profit": by_transfer_total_sell_price - by_transfer_total_arrival_price
