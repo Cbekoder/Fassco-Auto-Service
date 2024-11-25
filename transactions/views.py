@@ -754,12 +754,14 @@ class DetailedBranchStatisticsView(APIView):
             "not_transfer": {
                 "total" : not_transfer_total,
                 "arrival_price": not_transfer_total_arrival_price,
-                "sell_price": not_transfer_total_sell_price
+                "sell_price": not_transfer_total_sell_price,
+                "net_profit": not_transfer_total_sell_price - not_transfer_total_arrival_price
             },
             "by_transfer": {
                 "total": by_transfer_total,
                 "arrival_price": by_transfer_total_arrival_price,
-                "sell_price": by_transfer_total_sell_price
+                "sell_price": by_transfer_total_sell_price,
+                "net_profit": by_transfer_total_sell_price - by_transfer_total_arrival_price
             },
             "net_income": net_income
         }
