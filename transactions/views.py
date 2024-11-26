@@ -690,6 +690,16 @@ class DetailedBranchStatisticsView(APIView):
         warehouse_sell_price = warehouse_products.filter(amount__gt=0).aggregate(
             total_value=Sum(F("amount") * F("sell_price"), output_field=DecimalField()))["total_value"] or 0
 
+        total_paid = ImportList.objects.aggregate(total=Sum('paid'))['total'] or 0
+
+        paid_to_supplier_details = (
+            ImportList.objects
+            .values(
+                first_name=F('supplier__first_name'),
+                last_name=F('supplier__last_name'),
+            )
+            .annotate(total_debt=Sum('paid'))
+        )
 
         import_products = ImportProduct.objects.filter(import_list__branch=request.user.branch,
                                                        import_list__created_at__range=[start_date, end_date])
@@ -757,6 +767,10 @@ class DetailedBranchStatisticsView(APIView):
                 "sell_price": warehouse_sell_price,
                 "net_profit": warehouse_profit,
                 "detail": warehouse_detail
+            },
+            "warehouse_paid": {
+                "total": total_paid,
+                "detail": list(paid_to_supplier_details)
             },
             "not_transfer": {
                 "arrival_price": not_transfer_total_arrival_price,
