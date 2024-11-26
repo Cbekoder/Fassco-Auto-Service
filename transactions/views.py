@@ -697,7 +697,7 @@ class DetailedBranchStatisticsView(APIView):
                 first_name=F('supplier__first_name'),
                 last_name=F('supplier__last_name'),
             )
-            .annotate(total_debt=Sum('paid'))
+            .annotate(total_paid=Sum('paid'))
         )
 
         import_products = ImportProduct.objects.filter(import_list__branch=request.user.branch,
