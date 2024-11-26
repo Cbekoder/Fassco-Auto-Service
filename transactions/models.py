@@ -154,7 +154,7 @@ class ImportProduct(models.Model):
             self.total_summ = self.arrival_price * Decimal(self.amount)
 
             obj_product_sell_price = self.product.sell_price if self.product.sell_price == self.sell_price else self.sell_price
-            obj_product_arrival_price = self.product.arrival if self.product.arrival_price == self.arrival_price else self.arrival_price
+            obj_product_arrival_price = self.product.arrival_price if self.product.arrival_price == self.arrival_price else self.arrival_price
 
             warehouse_products = Product.objects.filter(branch=self.import_list.branch, is_temp=False).exclude(id=self.product.id)
             warehouse_total_sell = warehouse_products.filter(amount__gt=0).aggregate(
