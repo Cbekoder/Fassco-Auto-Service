@@ -690,11 +690,10 @@ class DetailedBranchStatisticsView(APIView):
         warehouse_sell_price = warehouse_products.filter(amount__gt=0).aggregate(
             total_value=Sum(F("amount") * F("sell_price"), output_field=DecimalField()))["total_value"] or 0
 
-        total_paid = ImportList.objects.aggregate(total=Sum('paid'))['total'] or 0
+        total_paid = import_list.aggregate(total=Sum('paid'))['total'] or 0
 
         paid_to_supplier_details = (
-            ImportList.objects
-            .values(
+            import_list.values(
                 first_name=F('supplier__first_name'),
                 last_name=F('supplier__last_name'),
             )
