@@ -585,41 +585,44 @@ class DetailedBranchStatisticsView(APIView):
                                                     order__created_at__range=[start_date, end_date])
         sold_product_total_price = order_products.aggregate(total=Sum(F("amount") * F("product__sell_price"),
                                                                      output_field=DecimalField()))["total"] or 0
-        products_totals_with_discount = order_products.annotate(
-            adjusted_total=Case(
-                When(
-                    discount_type="%",
-                    then=F("amount") * F("product__sell_price") * (1 - F("discount") / 100)
-                ),
-                When(
-                    discount_type="$",
-                    then=F("amount") * (F("product__sell_price") - F("discount"))
-                ),
-                default=F("amount") * F("product__sell_price"),
-                output_field=DecimalField(max_digits=15, decimal_places=2),
-            )
-        ).aggregate(total=Sum("adjusted_total"))["total"] or 0
+        # products_totals_with_discount = order_products.annotate(
+        #     adjusted_total=Case(
+        #         When(
+        #             discount_type="%",
+        #             then=F("amount") * F("product__sell_price") * (1 - F("discount") / 100)
+        #         ),
+        #         When(
+        #             discount_type="$",
+        #             then=F("amount") * (F("product__sell_price") - F("discount"))
+        #         ),
+        #         default=F("amount") * F("product__sell_price"),
+        #         output_field=DecimalField(max_digits=15, decimal_places=2),
+        #     )
+        # ).aggregate(total=Sum("adjusted_total"))["total"] or 0
+        products_totals_with_discount = orders.aggregate(total=Sum("product_total"))["total"] or 0
+
         sold_product_net_profit = order_products.aggregate(
             total=Sum(F("amount") * (F("product__sell_price") - F("product__arrival_price")),
                       output_field=DecimalField()))["total"] or 0
 
         order_services = OrderService.objects.filter(order__branch=request.user.branch,
                                                     order__created_at__range=[start_date, end_date])
-        service_income_total = order_services.aggregate(total=Sum("total"))["total"] or 0
-        service_totals_with_discount = order_services.annotate(
-                        adjusted_total=Case(
-                            When(
-                                discount_type="%",
-                                then=F("total") * (1 - F("discount") / 100)
-                            ),
-                            When(
-                                discount_type="$",
-                                then=F("total") - F("discount")
-                            ),
-                            default=F("total"),
-                            output_field=DecimalField(max_digits=15, decimal_places=2),
-                        )
-                    ).aggregate(total=Sum("adjusted_total"))["total"] or 0
+        service_income_total = order_services.aggregate(total=Sum(F("service__price")*F("part"), output_field=DecimalField()))["total"] or 0
+        # service_totals_with_discount = order_services.annotate(
+        #                 adjusted_total=Case(
+        #                     When(
+        #                         discount_type="%",
+        #                         then=F("total") * (1 - F("discount") / 100)
+        #                     ),
+        #                     When(
+        #                         discount_type="$",
+        #                         then=F("total") - F("discount")
+        #                     ),
+        #                     default=F("total"),
+        #                     output_field=DecimalField(max_digits=15, decimal_places=2),
+        #                 )
+        #             ).aggregate(total=Sum("adjusted_total"))["total"] or 0
+        service_totals_with_discount = orders.aggregate(total=Sum("service_total"))["total"] or 0
         order_income_total = products_totals_with_discount + service_totals_with_discount
 
         import_list = ImportList.objects.filter(branch=request.user.branch, created_at__range=[start_date, end_date])
