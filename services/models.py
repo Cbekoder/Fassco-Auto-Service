@@ -18,7 +18,9 @@ class Order(models.Model):
     paid = models.DecimalField(max_digits=15, decimal_places=0, verbose_name=_('Paid'))
     landing = models.DecimalField(max_digits=15, decimal_places=0, verbose_name=_('Debt'))
     product_total = models.DecimalField(default=0, max_digits=15, decimal_places=0, verbose_name=_('Product Total'))
+    product_overall_total = models.DecimalField(default=0, max_digits=15, decimal_places=0, verbose_name=_('Product Overall Total'))
     service_total = models.DecimalField(default=0, max_digits=15, decimal_places=0, verbose_name=_('Service Total'))
+    service_overall_total = models.DecimalField(default=0, max_digits=15, decimal_places=0, verbose_name=_('Service Overall Total'))
 
     odo_mileage = models.FloatField(blank=True, null=True, verbose_name=_('ODO mileage'))
     hev_mileage = models.FloatField(blank=True, null=True, verbose_name=_('HEV mileage'))
@@ -149,6 +151,7 @@ class OrderService(models.Model):
 
             self.order.total += self.total
             self.order.service_total += self.total
+            self.order.service_overall_total += self.service.price * Decimal(self.part)
             self.order.overall_total += self.service.price * Decimal(self.part)
             self.order.save()
 
@@ -177,6 +180,9 @@ class OrderProduct(models.Model):
                                                        verbose_name=_('Warehouse remainder sell price'))
     warehouse_remainder_arrival_price = models.FloatField(default=0, blank=True,
                                                           verbose_name=_('Warehouse remainder arrival price'))
+
+    net_profit = models.DecimalField(default=0, max_digits=15, decimal_places=0, verbose_name=_('Profit Total'))
+
 
     class Meta:
         verbose_name = _('Order product')

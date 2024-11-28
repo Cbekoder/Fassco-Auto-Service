@@ -76,6 +76,7 @@ class ImportList(models.Model):
                 super().save(*args, **kwargs)
             else:
                 if self.payment_type == "0":
+                    self.paid = 0
                     super().save(*args, **kwargs)
                 else:
                     wallet = Wallet.objects.last()
