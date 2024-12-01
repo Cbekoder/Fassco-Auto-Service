@@ -587,7 +587,7 @@ class DetailedBranchStatisticsView(APIView):
         order_products = OrderProduct.objects.filter(order__branch=request.user.branch,
                                                      order__created_at__range=[start_date, end_date])
         sold_product_net_profit = order_products.aggregate(
-            total=Sum("net_profit"), output_field=DecimalField())["total"] or 0
+            total=Sum("net_profit"))["total"] or 0
 
         service_income_total = orders.aggregate(total=Sum("service_overall_total"))["total"] or 0
         service_totals_with_discount = orders.aggregate(total=Sum("service_total"))["total"] or 0
