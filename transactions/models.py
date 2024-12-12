@@ -193,13 +193,11 @@ class BranchFundTransfer(models.Model):
     def save(self, *args, **kwargs):
         with transaction.atomic():
             wallet = Wallet.objects.last()
-            if self.branch.balance >= 0:
-                wallet.balance += self.branch.balance
-                wallet.save()
-                self.branch.balance = 0
-                self.branch.save()
-            else:
-                raise ValidationError({"detail": "Branch fund is less than 0"})
+            wallet.balance += self.branch.balance
+            wallet.save()
+            self.branch.balance = 0
+            self.branch.save()
+            super().save(*args, **kwargs)
 
 
 class ExpenseType(models.Model):
@@ -237,10 +235,7 @@ class Expense(models.Model):
                 old_amount = old_instance.amount
                 self.branch.balance += old_amount
             super().save(*args, **kwargs)
-            if self.branch.balance >= self.amount:
-                self.branch.balance -= self.amount
-            else:
-                raise ValidationError({'detail': 'Not enough balance to spend expense amount'})
+            self.branch.balance -= self.amount
             self.branch.save()
 
     def delete(self, *args, **kwargs):
